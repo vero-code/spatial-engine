@@ -1,0 +1,21 @@
+# Virtual environment
+venv/
+env/
+.env
+
+# Python byte code
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE settings
+.idea/
+.vscode/
+*.swp
+
+# Logs and db
+*.log
+*.sqlite3
+
+# MacOS
+.DS_Store
