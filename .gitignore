@@ -19,3 +19,16 @@ __pycache__/
 
 # MacOS
 .DS_Store
+
+# Media
+*.mp4
+*.mov
+*.avi
+*.jpg
+*.jpeg
+*.png
+*.gif
+
+# Folders
+media/
+downloads/
