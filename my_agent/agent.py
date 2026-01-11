@@ -1,16 +1,8 @@
-# Copyright 2025 Google LLC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# my_agent\agent.py
+import os
+import sys
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -22,22 +14,36 @@ from google.adk.tools import google_search
 from google.genai import types
 import asyncio
 
-APP_NAME="google_search_agent"
-USER_ID="user1234"
-SESSION_ID="1234"
+from physics_engine import calculate_lux_at_point, generate_optimization_report
 
+APP_NAME="spatial_engine_core"
+USER_ID="engineer_01"
+SESSION_ID="session_v1"
+
+# --- SYSTEM PROMPT ---
+SPATIAL_ENGINEER_PROMPT = """
+You are the Spatial Engine AI, a Senior Optical Physicist and Energy Efficiency Engineer.
+Your goal is to optimize lighting environments using precise mathematical modeling.
+
+CORE PROTOCOL:
+1. **ANALYZE**: Identify the user's room parameters (area, current lighting).
+2. **CALCULATE**: NEVER guess light levels. ALWAYS use the `calculate_lux_at_point` or `generate_optimization_report` tools to back up your advice with numbers.
+3. **SEARCH**: Use `Google Search` ONLY to find real-world pricing for specific lamps (e.g., "price of Philips Hue 800lm") or official standards.
+4. **REPORT**: Your output must be technical but actionable. Structure it as:
+   - **Physics Analysis**: The math behind the current state.
+   - **Optimization Strategy**: Specific changes with calculated numbers.
+   - **Product Recommendations**: Real products found via search.
+
+You are rigorous, precise, and data-driven. Do not be chatty—be professional.
+"""
+
+# --- AGENT ---
 root_agent = Agent(
-    name="basic_search_agent",
+    name="spatial_engine_agent",
     model="gemini-3-pro-preview",
-    description="Agent to answer questions using Google Search.",
-    instruction="""
-    You are a helpful assistant with access to Google Search.
-    
-    If the user asks a question that requires current information or facts, use the 'google_search' tool.
-    Always cite your sources implicitly by providing the answer clearly based on the search results.
-    """,
-    # google_search is a pre-built tool which allows the agent to perform Google searches.
-    tools=[google_search]
+    description="An autonomous agent for spatial light reasoning and energy calculation.",
+    instruction=SPATIAL_ENGINEER_PROMPT,
+    tools=[calculate_lux_at_point, generate_optimization_report]
 )
 
 # Session and Runner
@@ -49,14 +55,30 @@ async def setup_session_and_runner():
 
 # Agent Interaction
 async def call_agent_async(query):
+    print(f"User Query: {query}\n" + "-"*50)
     content = types.Content(role='user', parts=[types.Part(text=query)])
     session, runner = await setup_session_and_runner()
     events = runner.run_async(user_id=USER_ID, session_id=SESSION_ID, new_message=content)
 
+    print("Thinking...", end="", flush=True)
+
     async for event in events:
-        if event.is_final_response():
-            final_response = event.content.parts[0].text
-            print("Agent Response: ", final_response)
+        print("\r", end="")
+        try:
+            if event.content and event.content.parts:
+                for part in event.content.parts:
+                    if part.text:
+                        print(f"\n🗣️ Agent: {part.text}")
+                    if part.function_call:
+                        print(f"\n🛠️ TOOL CALL: {part.function_call.name}")
+                        print(f"   Args: {part.function_call.args}")
+        except Exception as e:
+            print(f"\n[Log]: Event processing detail: {e}")
+
+    print("\n" + "="*50)
+    print("🏁 Session Finished")
+                
 
 if __name__ == "__main__":
-    asyncio.run(call_agent_async("what's the latest ai news?"))
+    test_query = "I have a 20 sqm home office with only one 800 lumen bulb. It feels too dark for working. Calculate exactly how many lumens I am missing for standard office work (500 lux) and find me a suitable lamp on amazon."
+    asyncio.run(call_agent_async(test_query))
