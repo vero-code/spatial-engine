@@ -17,6 +17,7 @@ __pycache__/
 # Logs and db
 *.log
 *.sqlite3
+*.db
 
 # MacOS
 .DS_Store
