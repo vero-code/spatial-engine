@@ -6,6 +6,8 @@ import pypdf
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+from spatial_state import SpatialState
+
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -22,15 +24,33 @@ APP_NAME="spatial_engine_core"
 USER_ID="engineer_01"
 SESSION_ID="session_v1"
 
+room_state = SpatialState()
+
+def set_room_parameters(area_sqm: float, wall_reflection: float):
+    """
+    Sets the room's physical parameters in the state.
+    area_sqm: Estimated floor area in square meters.
+    wall_reflection: 0.2 (Brick/Dark) to 0.8 (White/Mirrors). Default is 0.5.
+    """
+    room_state.area_sqm = area_sqm
+    room_state.wall_reflection = wall_reflection
+    room_state.update_geometry(area_sqm)
+    return f"State Updated: Area={area_sqm} sqm, Reflection={wall_reflection}."
+
+def add_light_to_room(name: str, lumens: float):
+    """Adds a light source to the internal spatial state."""
+    room_state.add_light_source(name, lumens)
+    return f"State Updated: Added {name} ({lumens} lm)."
+
+def get_room_state():
+    """Returns the current summary of the room: area, sources, and total lux."""
+    return room_state.get_summary()
+
 def read_pdf_file(file_path: str) -> str:
-    """
-    Reads a PDF file from the given path and returns its text content.
-    Useful for extracting technical specs from datasheets.
-    """
+    """Reads a PDF file from the given path and returns its text content."""
     try:
         if not os.path.exists(file_path):
             return f"Error: File '{file_path}' not found."
-        
         reader = pypdf.PdfReader(file_path)
         text = f"--- Content of {file_path} ---\n"
         for i, page in enumerate(reader.pages):
@@ -44,26 +64,31 @@ SPATIAL_ENGINEER_PROMPT = """
 You are the Spatial Engine AI, a Senior Optical Physicist.
 
 CORE PROTOCOL:
+
 1. **VISUAL AUDIT (Step-by-Step)**:
-   - **Grid Analysis**: Mentally divide the image into a 3x3 grid (Top-Left to Bottom-Right).
-   - **Light Sources**: Identify windows or lamps. Report their grid position (e.g., "Window in Top-Right [Sector 3]").
-   - **Geometry**: Estimate floor area (sqm) based on standard furniture scale (e.g., standard chair is 0.5m wide).
-   - **Materials**: Identify wall reflection coefficient (High: White paint / Low: Brick, Concrete).
+   - **Grid Analysis**: Mentally divide the image into a 3x3 grid.
+   - **Materials**: Identify wall reflection (High: White paint=0.8 / Low: Brick=0.2).
+   - **Geometry**: Estimate floor area (sqm) based on standard furniture scale.
+   
+   >>> **CRITICAL ACTION**: Immediately call `set_room_parameters(area_sqm, wall_reflection)` to SAVE these findings.
 
-2. **DOCUMENT ANALYSIS**:
-   - If a PDF file path is provided, use `read_pdf_file` to extract specifications.
+2. **LIGHT SOURCE AUDIT**:
+   - Identify windows or lamps.
+   - For each source, estimate lumens (Window=1000-5000, Bulb=800).
+   
+   >>> **CRITICAL ACTION**: Call `add_light_to_room(name, lumens)` for EACH source found.
 
-3. **CALCULATION**:
-   - Take the estimated area from the Visual Audit.
-   - Use `generate_optimization_report` to calculate the Lumen Deficit.
-   - Use `calculate_roi_and_savings` if relevant.
+3. **DOCUMENT ANALYSIS** (If PDF provided):
+   - Use `read_pdf_file`. If a new lamp is found, call `add_light_to_room` to simulate installing it.
 
-4. **REPORTING**:
-   - Start with the **"Visual Scan Results"**:
-     > "Analyzed 3x3 Grid: Window detected in Sector 2. Dark zone in Sector 7."
-   - Follow with the **"Physics Report"** containing the numbers.
+4. **PHYSICS VERIFICATION**:
+   - Call `get_room_state` to retrieve the mathematically accurate Lux level.
+   - DO NOT calculate manually. Trust the State Tool.
 
-You are rigorous. DO NOT HALLUCINATE light levels—if dark, assume 0 lumens initially.
+5. **REPORTING**:
+   - Start with "Visual Scan Results" (Grid, Materials).
+   - Provide the "Physics Report" from the State.
+   - If Lux < 500, recommend solutions.
 """
 
 # --- AGENT ---
@@ -72,7 +97,15 @@ root_agent = Agent(
     model="gemini-3-pro-preview",
     description="An autonomous agent for spatial light reasoning, energy calculation, and document analysis.",
     instruction=SPATIAL_ENGINEER_PROMPT,
-    tools=[calculate_lux_at_point, generate_optimization_report, calculate_roi_and_savings, read_pdf_file]
+    tools=[
+        calculate_lux_at_point, 
+        generate_optimization_report, 
+        calculate_roi_and_savings, 
+        read_pdf_file,
+        set_room_parameters,
+        add_light_to_room,
+        get_room_state
+    ]
 )
 
 # Session and Runner
@@ -125,7 +158,6 @@ async def call_agent_async(query, image_path=None):
 
     print("\n" + "="*50)
     print("🏁 Session Finished")
-                
 
 if __name__ == "__main__":
     # test_query = "I have a 20 sqm home office with only one 800 lumen bulb. It feels too dark for working. Calculate exactly how many lumens I am missing for standard office work (500 lux) and find me a suitable lamp on amazon."
@@ -150,16 +182,34 @@ if __name__ == "__main__":
     #     asyncio.run(call_agent_async("Calculate ROI for switching 60W to 9W LEDs."))
 
     # PDF Test
+    # pdf_file = "data/datasheet.pdf"
+    
+    # query = f"""
+    # Read the technical specs from {pdf_file}.
+    # Based on the 'Luminous Flux' found in the file, would one such lamp be enough 
+    # to light up a 10 sqm room to a level of 300 lux? 
+    # Calculate and explain.
+    # """
+
+    # if os.path.exists(pdf_file):
+    #     asyncio.run(call_agent_async(query))
+    # else:
+    #     print("⚠️ PDF file not found!")
+
+    # Comprehensive loop logic test
     pdf_file = "data/datasheet.pdf"
     
     query = f"""
-    Read the technical specs from {pdf_file}.
-    Based on the 'Luminous Flux' found in the file, would one such lamp be enough 
-    to light up a 10 sqm room to a level of 300 lux? 
-    Calculate and explain.
+    I have a dark room (approx 15 sqm, white walls) with no lights currently.
+    I am considering buying the lamp from {pdf_file}.
+    
+    Please:
+    1. Set up the room parameters (Area and Material).
+    2. Read the PDF and add that lamp to the room state.
+    3. Tell me the final Lux level from the state and if it is good for reading (needs 300+ Lux).
     """
 
     if os.path.exists(pdf_file):
         asyncio.run(call_agent_async(query))
     else:
-        print("⚠️ PDF file not found!")
+        print("⚠️ File not found, run create_pdf.py first!")
