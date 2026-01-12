@@ -14,7 +14,7 @@ from google.adk.tools import google_search
 from google.genai import types
 import asyncio
 
-from physics_engine import calculate_lux_at_point, generate_optimization_report
+from physics_engine import calculate_lux_at_point, generate_optimization_report, calculate_roi_and_savings
 
 APP_NAME="spatial_engine_core"
 USER_ID="engineer_01"
@@ -43,7 +43,7 @@ root_agent = Agent(
     model="gemini-3-pro-preview",
     description="An autonomous agent for spatial light reasoning and energy calculation.",
     instruction=SPATIAL_ENGINEER_PROMPT,
-    tools=[calculate_lux_at_point, generate_optimization_report]
+    tools=[calculate_lux_at_point, generate_optimization_report, calculate_roi_and_savings]
 )
 
 # Session and Runner
@@ -80,5 +80,7 @@ async def call_agent_async(query):
                 
 
 if __name__ == "__main__":
-    test_query = "I have a 20 sqm home office with only one 800 lumen bulb. It feels too dark for working. Calculate exactly how many lumens I am missing for standard office work (500 lux) and find me a suitable lamp on amazon."
+    # test_query = "I have a 20 sqm home office with only one 800 lumen bulb. It feels too dark for working. Calculate exactly how many lumens I am missing for standard office work (500 lux) and find me a suitable lamp on amazon."
+    test_query = "I plan to replace ten 60W incandescent bulbs with 9W LEDs. They are on for 5 hours a day. Electricity costs $0.20 per kWh. Calculate my exact annual savings in dollars and CO2 reduction."
+    
     asyncio.run(call_agent_async(test_query))

@@ -57,3 +57,37 @@ def generate_optimization_report(room_area_sqm: float, target_lux: int, current_
 
     print(f"[PHYSICS ENGINE]: Report Generated. Deficit: {deficiency}")
     return json.dumps(data)
+
+def calculate_roi_and_savings(old_watts: int, new_watts: int, hours_per_day: float = 8.0, kwh_cost_usd: float = 0.15) -> str:
+    """
+    Calculates energy savings and ROI for switching to efficient lighting.
+    
+    Args:
+        old_watts: Wattage of the current bulb (e.g., 60W incandescent).
+        new_watts: Wattage of the replacement bulb (e.g., 9W LED).
+        hours_per_day: Average usage hours.
+        kwh_cost_usd: Cost of electricity per kWh (default $0.15).
+        
+    Returns:
+        JSON string with annual savings and ROI analysis.
+    """
+    print(f"\n[PHYSICS ENGINE]: Calculating ROI (Old: {old_watts}W vs New: {new_watts}W)...")
+    
+    # Calculate the difference in consumption (kW)
+    watts_saved = old_watts - new_watts
+    kwh_saved_daily = (watts_saved * hours_per_day) / 1000
+    kwh_saved_annual = kwh_saved_daily * 365
+    
+    # Calculate the money
+    money_saved_annual = kwh_saved_annual * kwh_cost_usd
+    co2_saved_kg = kwh_saved_annual * 0.385  # Average emission coefficient
+    
+    data = {
+        "annual_savings_usd": round(money_saved_annual, 2),
+        "kwh_saved_year": round(kwh_saved_annual, 1),
+        "co2_reduction_kg": round(co2_saved_kg, 1),
+        "message": f"Switching saves ${round(money_saved_annual, 2)} per year and reduces CO2 by {round(co2_saved_kg, 1)}kg."
+    }
+    
+    print(f"[PHYSICS ENGINE]: ROI Calculated. Savings: ${data['annual_savings_usd']}/yr")
+    return json.dumps(data)
