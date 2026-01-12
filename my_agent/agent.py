@@ -2,6 +2,7 @@
 import os
 import sys
 from pathlib import Path
+import pypdf
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -21,6 +22,23 @@ APP_NAME="spatial_engine_core"
 USER_ID="engineer_01"
 SESSION_ID="session_v1"
 
+def read_pdf_file(file_path: str) -> str:
+    """
+    Reads a PDF file from the given path and returns its text content.
+    Useful for extracting technical specs from datasheets.
+    """
+    try:
+        if not os.path.exists(file_path):
+            return f"Error: File '{file_path}' not found."
+        
+        reader = pypdf.PdfReader(file_path)
+        text = f"--- Content of {file_path} ---\n"
+        for i, page in enumerate(reader.pages):
+            text += f"[Page {i+1}]\n{page.extract_text()}\n"
+        return text
+    except Exception as e:
+        return f"Error reading PDF: {str(e)}"
+
 # --- SYSTEM PROMPT ---
 SPATIAL_ENGINEER_PROMPT = """
 You are the Spatial Engine AI, a Senior Optical Physicist.
@@ -32,12 +50,15 @@ CORE PROTOCOL:
    - **Geometry**: Estimate floor area (sqm) based on standard furniture scale (e.g., standard chair is 0.5m wide).
    - **Materials**: Identify wall reflection coefficient (High: White paint / Low: Brick, Concrete).
 
-2. **CALCULATION**:
+2. **DOCUMENT ANALYSIS**:
+   - If a PDF file path is provided, use `read_pdf_file` to extract specifications.
+
+3. **CALCULATION**:
    - Take the estimated area from the Visual Audit.
    - Use `generate_optimization_report` to calculate the Lumen Deficit.
    - Use `calculate_roi_and_savings` if relevant.
 
-3. **REPORTING**:
+4. **REPORTING**:
    - Start with the **"Visual Scan Results"**:
      > "Analyzed 3x3 Grid: Window detected in Sector 2. Dark zone in Sector 7."
    - Follow with the **"Physics Report"** containing the numbers.
@@ -49,9 +70,9 @@ You are rigorous. DO NOT HALLUCINATE light levels—if dark, assume 0 lumens ini
 root_agent = Agent(
     name="spatial_engine_agent",
     model="gemini-3-pro-preview",
-    description="An autonomous agent for spatial light reasoning and energy calculation.",
+    description="An autonomous agent for spatial light reasoning, energy calculation, and document analysis.",
     instruction=SPATIAL_ENGINEER_PROMPT,
-    tools=[calculate_lux_at_point, generate_optimization_report, calculate_roi_and_savings]
+    tools=[calculate_lux_at_point, generate_optimization_report, calculate_roi_and_savings, read_pdf_file]
 )
 
 # Session and Runner
@@ -112,17 +133,33 @@ if __name__ == "__main__":
 
     # asyncio.run(call_agent_async(test_query))
     
-    test_image = "test_room.png"
+    # Image Test
+    # test_image = "test_room.png"
     
-    query = """
-    Look at this image.
-    1. Estimate the room area (sqm).
-    2. Identify the wall material.
-    3. Calculate the lumen deficit for a standard Home Office (500 lux), assuming current lighting is 0.
+    # query = """
+    # Look at this image.
+    # 1. Estimate the room area (sqm).
+    # 2. Identify the wall material.
+    # 3. Calculate the lumen deficit for a standard Home Office (500 lux), assuming current lighting is 0.
+    # """
+
+    # if os.path.exists(test_image):
+    #     asyncio.run(call_agent_async(query, image_path=test_image))
+    # else:
+    #     print("⚠️ Image not found, running text test...")
+    #     asyncio.run(call_agent_async("Calculate ROI for switching 60W to 9W LEDs."))
+
+    # PDF Test
+    pdf_file = "data/datasheet.pdf"
+    
+    query = f"""
+    Read the technical specs from {pdf_file}.
+    Based on the 'Luminous Flux' found in the file, would one such lamp be enough 
+    to light up a 10 sqm room to a level of 300 lux? 
+    Calculate and explain.
     """
 
-    if os.path.exists(test_image):
-        asyncio.run(call_agent_async(query, image_path=test_image))
+    if os.path.exists(pdf_file):
+        asyncio.run(call_agent_async(query))
     else:
-        print("⚠️ Image not found, running text test...")
-        asyncio.run(call_agent_async("Calculate ROI for switching 60W to 9W LEDs."))
+        print("⚠️ PDF file not found!")
