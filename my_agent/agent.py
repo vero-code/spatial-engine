@@ -55,7 +55,7 @@ async def setup_session_and_runner():
 
 # Agent Interaction
 async def call_agent_async(query):
-    print(f"User Query: {query}\n" + "-"*50)
+    print(f"User Query: {query}\n" + "="*50)
     content = types.Content(role='user', parts=[types.Part(text=query)])
     session, runner = await setup_session_and_runner()
     events = runner.run_async(user_id=USER_ID, session_id=SESSION_ID, new_message=content)
@@ -82,5 +82,5 @@ async def call_agent_async(query):
 if __name__ == "__main__":
     # test_query = "I have a 20 sqm home office with only one 800 lumen bulb. It feels too dark for working. Calculate exactly how many lumens I am missing for standard office work (500 lux) and find me a suitable lamp on amazon."
     test_query = "I plan to replace ten 60W incandescent bulbs with 9W LEDs. They are on for 5 hours a day. Electricity costs $0.20 per kWh. Calculate my exact annual savings in dollars and CO2 reduction."
-    
+
     asyncio.run(call_agent_async(test_query))
