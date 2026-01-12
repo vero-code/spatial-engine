@@ -1,6 +1,7 @@
 # my_agent\agent.py
 import os
 import sys
+from pathlib import Path
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -26,10 +27,13 @@ You are the Spatial Engine AI, a Senior Optical Physicist and Energy Efficiency 
 Your goal is to optimize lighting environments using precise mathematical modeling.
 
 CORE PROTOCOL:
-1. **ANALYZE**: Identify the user's room parameters (area, current lighting).
-2. **CALCULATE**: NEVER guess light levels. ALWAYS use the `calculate_lux_at_point` or `generate_optimization_report` tools to back up your advice with numbers.
+1. **ANALYZE**: 
+   - **If Image Provided**: VISUALLY estimate the room parameters (Area in sqm assuming 2.7m ceiling). Identify shadow zones and wall materials (reflection).
+   - **If Text**: Identify the user's room parameters from description.
+2. **CALCULATE**: NEVER guess light levels. ALWAYS use the `calculate_lux_at_point`, `generate_optimization_report`, or `calculate_roi_and_savings` tools to back up your advice with numbers.
 3. **SEARCH**: Use `Google Search` ONLY to find real-world pricing for specific lamps (e.g., "price of Philips Hue 800lm") or official standards.
 4. **REPORT**: Your output must be technical but actionable. Structure it as:
+   - **Visual Observations**: (If applicable) Estimated area, geometry, and material analysis.
    - **Physics Analysis**: The math behind the current state.
    - **Optimization Strategy**: Specific changes with calculated numbers.
    - **Product Recommendations**: Real products found via search.
@@ -54,9 +58,28 @@ async def setup_session_and_runner():
     return session, runner
 
 # Agent Interaction
-async def call_agent_async(query):
+async def call_agent_async(query, image_path=None):
     print(f"User Query: {query}\n" + "="*50)
-    content = types.Content(role='user', parts=[types.Part(text=query)])
+
+    parts = [types.Part(text=query)]
+    
+    if image_path:
+        path = Path(image_path)
+        if path.exists():
+            print(f"📎 Attaching image: {image_path} ({path.stat().st_size} bytes)")
+            image_data = path.read_bytes()
+            parts.append(types.Part(
+                inline_data=types.Blob(
+                    mime_type="image/jpeg",
+                    data=image_data
+                )
+            ))
+        else:
+            print(f"⚠️ Error: Image file '{image_path}' not found!")
+
+    print("="*50)
+
+    content = types.Content(role='user', parts=parts)
     session, runner = await setup_session_and_runner()
     events = runner.run_async(user_id=USER_ID, session_id=SESSION_ID, new_message=content)
 
@@ -81,6 +104,21 @@ async def call_agent_async(query):
 
 if __name__ == "__main__":
     # test_query = "I have a 20 sqm home office with only one 800 lumen bulb. It feels too dark for working. Calculate exactly how many lumens I am missing for standard office work (500 lux) and find me a suitable lamp on amazon."
-    test_query = "I plan to replace ten 60W incandescent bulbs with 9W LEDs. They are on for 5 hours a day. Electricity costs $0.20 per kWh. Calculate my exact annual savings in dollars and CO2 reduction."
+    # test_query = "I plan to replace ten 60W incandescent bulbs with 9W LEDs. They are on for 5 hours a day. Electricity costs $0.20 per kWh. Calculate my exact annual savings in dollars and CO2 reduction."
 
-    asyncio.run(call_agent_async(test_query))
+    # asyncio.run(call_agent_async(test_query))
+    
+    test_image = "test_room.png"
+    
+    query = """
+    Look at this image.
+    1. Estimate the room area (sqm).
+    2. Identify the wall material.
+    3. Calculate the lumen deficit for a standard Home Office (500 lux), assuming current lighting is 0.
+    """
+
+    if os.path.exists(test_image):
+        asyncio.run(call_agent_async(query, image_path=test_image))
+    else:
+        print("⚠️ Image not found, running text test...")
+        asyncio.run(call_agent_async("Calculate ROI for switching 60W to 9W LEDs."))
