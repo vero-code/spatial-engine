@@ -1,8 +1,10 @@
 # my_agent\agent.py
 import os
 import sys
+import json
 from pathlib import Path
 import pypdf
+import asyncio
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -14,11 +16,10 @@ load_dotenv()
 from google.adk.agents import Agent
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
-from google.adk.tools import google_search
 from google.genai import types
-import asyncio
 
 from physics_engine import calculate_lux_at_point, generate_optimization_report, calculate_roi_and_savings
+from market_agent import search_product_data
 
 APP_NAME="spatial_engine_core"
 USER_ID="engineer_01"
@@ -26,12 +27,9 @@ SESSION_ID="session_v1"
 
 room_state = SpatialState()
 
+# --- STATE TOOLS ---
 def set_room_parameters(area_sqm: float, wall_reflection: float):
-    """
-    Sets the room's physical parameters in the state.
-    area_sqm: Estimated floor area in square meters.
-    wall_reflection: 0.2 (Brick/Dark) to 0.8 (White/Mirrors). Default is 0.5.
-    """
+    """Sets room geometry. Reflection: 0.2 (Brick/Dark) to 0.8 (White/Mirrors)."""
     room_state.area_sqm = area_sqm
     room_state.wall_reflection = wall_reflection
     room_state.update_geometry(area_sqm)
@@ -46,8 +44,25 @@ def get_room_state():
     """Returns the current summary of the room: area, sources, and total lux."""
     return room_state.get_summary()
 
+# --- MARKET TOOL WRAPPER ---
+def search_market_tool(query: str):
+    """
+    Multipurpose Market Tool.
+    1. Search for products: "Price of Philips LED 1500lm"
+    2. Search for rates: "Electricity rate in New York"
+    
+    Returns JSON string with data.
+    """
+    print(f"\n[MAIN AGENT] 🛒 Market Request: '{query}'...")
+    data = search_product_data(query)
+    
+    if "error" in data:
+        return f"Market Error: {data['error']}"
+    
+    return json.dumps(data, indent=2)
+
 def read_pdf_file(file_path: str) -> str:
-    """Reads a PDF file from the given path and returns its text content."""
+    """Reads a PDF file from the given path."""
     try:
         if not os.path.exists(file_path):
             return f"Error: File '{file_path}' not found."
@@ -61,50 +76,52 @@ def read_pdf_file(file_path: str) -> str:
 
 # --- SYSTEM PROMPT ---
 SPATIAL_ENGINEER_PROMPT = """
-You are the Spatial Engine AI, a Senior Optical Physicist.
+You are the Spatial Engine AI. You combine Optical Physics with Real-World Economics.
 
 CORE PROTOCOL:
 
-1. **VISUAL AUDIT (Step-by-Step)**:
-   - **Grid Analysis**: Mentally divide the image into a 3x3 grid.
-   - **Materials**: Identify wall reflection (High: White paint=0.8 / Low: Brick=0.2).
-   - **Geometry**: Estimate floor area (sqm) based on standard furniture scale.
-   
-   >>> **CRITICAL ACTION**: Immediately call `set_room_parameters(area_sqm, wall_reflection)` to SAVE these findings.
+1. **VISUAL AUDIT**:
+   - Analyze the room (Area, Materials).
+   - CALL `set_room_parameters`.
 
-2. **LIGHT SOURCE AUDIT**:
-   - Identify windows or lamps.
-   - For each source, estimate lumens (Window=1000-5000, Bulb=800).
-   
-   >>> **CRITICAL ACTION**: Call `add_light_to_room(name, lumens)` for EACH source found.
+2. **SIMULATION**:
+   - Check current Lux (`get_room_state`).
+   - If <500 Lux, identify the deficit.
 
-3. **DOCUMENT ANALYSIS** (If PDF provided):
-   - Use `read_pdf_file`. If a new lamp is found, call `add_light_to_room` to simulate installing it.
+3. **PROCUREMENT (Market Search)**:
+   - **Step A (Product)**: Find a suitable lamp. Query example: "Price of 1600 lumen LED bulb Philips".
+     - Extract `price_usd` and `watts`.
+   - **Step B (Rates)**: Find local electricity cost. Query example: "Electricity rate in New York".
+     - Extract `rate_usd_kwh`.
 
-4. **PHYSICS VERIFICATION**:
-   - Call `get_room_state` to retrieve the mathematically accurate Lux level.
-   - DO NOT calculate manually. Trust the State Tool.
+4. **FINANCIAL ANALYSIS (ROI)**:
+   - CALL `calculate_roi_and_savings`.
+   - Inputs:
+     - `old_watts`: Assume 60W or 100W if replacing old bulbs.
+     - `new_watts`: From Step A.
+     - `new_bulb_price`: From Step A.
+     - `kwh_cost_usd`: From Step B (default 0.17 if search fails).
 
 5. **REPORTING**:
-   - Start with "Visual Scan Results" (Grid, Materials).
-   - Provide the "Physics Report" from the State.
-   - If Lux < 500, recommend solutions.
+   - Summarize the Physics (Lux improvement).
+   - Summarize the Economics (ROI & Payback time).
 """
 
 # --- AGENT ---
 root_agent = Agent(
     name="spatial_engine_agent",
     model="gemini-3-pro-preview",
-    description="An autonomous agent for spatial light reasoning, energy calculation, and document analysis.",
+    description="Spatial AI with Physics and Market Logic.",
     instruction=SPATIAL_ENGINEER_PROMPT,
     tools=[
         calculate_lux_at_point, 
         generate_optimization_report, 
         calculate_roi_and_savings, 
-        read_pdf_file,
         set_room_parameters,
         add_light_to_room,
-        get_room_state
+        get_room_state,
+        read_pdf_file,
+        search_market_tool
     ]
 )
 
@@ -118,7 +135,6 @@ async def setup_session_and_runner():
 # Agent Interaction
 async def call_agent_async(query, image_path=None):
     print(f"User Query: {query}\n" + "="*50)
-
     parts = [types.Part(text=query)]
     
     if image_path:
@@ -126,30 +142,19 @@ async def call_agent_async(query, image_path=None):
         if path.exists():
             print(f"📎 Attaching image: {image_path} ({path.stat().st_size} bytes)")
             image_data = path.read_bytes()
-            parts.append(types.Part(
-                inline_data=types.Blob(
-                    mime_type="image/jpeg",
-                    data=image_data
-                )
-            ))
-        else:
-            print(f"⚠️ Error: Image file '{image_path}' not found!")
-
-    print("="*50)
-
+            parts.append(types.Part(inline_data=types.Blob(mime_type="image/jpeg", data=image_data)))
+    
     content = types.Content(role='user', parts=parts)
     session, runner = await setup_session_and_runner()
     events = runner.run_async(user_id=USER_ID, session_id=SESSION_ID, new_message=content)
 
     print("Thinking...", end="", flush=True)
-
     async for event in events:
         print("\r", end="")
         try:
             if event.content and event.content.parts:
                 for part in event.content.parts:
-                    if part.text:
-                        print(f"\n🗣️ Agent: {part.text}")
+                    if part.text: print(f"\n🗣️ Agent: {part.text}")
                     if part.function_call:
                         print(f"\n🛠️ TOOL CALL: {part.function_call.name}")
                         print(f"   Args: {part.function_call.args}")
@@ -197,19 +202,37 @@ if __name__ == "__main__":
     #     print("⚠️ PDF file not found!")
 
     # Comprehensive loop logic test
-    pdf_file = "data/datasheet.pdf"
+    # pdf_file = "data/datasheet.pdf"
     
-    query = f"""
-    I have a dark room (approx 15 sqm, white walls) with no lights currently.
-    I am considering buying the lamp from {pdf_file}.
+    # query = f"""
+    # I have a dark room (approx 15 sqm, white walls) with no lights currently.
+    # I am considering buying the lamp from {pdf_file}.
+    
+    # Please:
+    # 1. Set up the room parameters (Area and Material).
+    # 2. Read the PDF and add that lamp to the room state.
+    # 3. Tell me the final Lux level from the state and if it is good for reading (needs 300+ Lux).
+    # """
+
+    # if os.path.exists(pdf_file):
+    #     asyncio.run(call_agent_async(query))
+    # else:
+    #     print("⚠️ File not found, run create_pdf.py first!")
+
+    # FINAL INTEGRATION TEST
+    # Мы просим агента:
+    # 1. Оценить комнату (симуляция)
+    # 2. Найти лампу Philips (рынок)
+    # 3. Найти тариф в Нью-Йорке (рынок)
+    # 4. Посчитать окупаемость (ROI)
+    
+    query = """
+    I have a dark 15 sqm room with white walls and one old 100W bulb.
     
     Please:
-    1. Set up the room parameters (Area and Material).
-    2. Read the PDF and add that lamp to the room state.
-    3. Tell me the final Lux level from the state and if it is good for reading (needs 300+ Lux).
+    1. Update the room state.
+    2. Find a Philips LED bulb (1500+ lumens) and the current electricity rate in New York.
+    3. Calculate the ROI if I switch to this new bulb using the specific New York rate.
     """
 
-    if os.path.exists(pdf_file):
-        asyncio.run(call_agent_async(query))
-    else:
-        print("⚠️ File not found, run create_pdf.py first!")
+    asyncio.run(call_agent_async(query))
