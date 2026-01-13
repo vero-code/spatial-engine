@@ -22,7 +22,16 @@ The agent can "see" and audit a room from a single photograph using **Gemini 3.0
 - **Shadow Detection**: Identifies under-lit zones requiring optimization.
 - **Scale Estimation**: Uses **Reference Object Inference** (e.g., comparing room width to standard door frames) to estimate floor area without user input.
 
-### 3. Agentic Workflow
+### 3. Spatial State Memory (Stateful)
+The agent possesses a "Short-term Memory" via the `SpatialState` class.
+- **Persistence**: It remembers room geometry and light sources across multiple reasoning steps.
+- **Layering**: Can combine visual data (from a photo) with technical data (from a PDF) into a single simulation model.
+
+### 4. Technical Document Parsing
+- **PDF Analysis**: Capable of reading datasheets and blueprints to extract technical specifications (Lumens, Watts, CRI).
+- **Simulation**: Can "virtually install" a lamp found in a catalog into the scanned room to predict the final Lux level.
+
+### 5. Agentic Workflow
 - **Tool Use**: Autonomous Function Calling (The agent decides when to calculate vs. when to analyze).
 - **Streaming CLI**: Real-time "Thinking" logs showing Tool Calls and arguments in the terminal.
 
@@ -35,6 +44,7 @@ spatial-engine/
 ├── my_agent/
 │   ├── agent.py            # The "Brain": System Prompt, Tool Binding, Vision Handler
 │   ├── physics_engine.py   # The "Core": Pure Python math functions (No AI here)
+│   ├── spatial_state.py    # The "Memory": Python class for managing room state
 │   └── search_tool.py      # (In Progress) Market analysis tools
 ├── tests/
 │   └── test_physics.py     # Unit tests verifying the math formulas
@@ -97,11 +107,11 @@ spatial-engine/
 - [x] **Persona**: Senior Optical Engineer system prompt configuration.
 
 ### 👁️ Sprint 2: The Vision (Completed)
-> *Status: Implemented. Agent "sees" geometry and materials.*
+> *Status: Implemented. Agent "sees" geometry and materials, "reads", and "remembers".*
 - [x] **Multimodality**: Binary File Handler for image uploads.
 - [x] **Visual Analysis**: 3x3 Grid decomposition, Shadow Detection, Material/Albedo identification.
 - [x] **Spatial Reasoning**: Scale estimation via Reference Object Inference (no user input needed).
-- [ ] **Advanced Features**: PDF Parser for blueprints, Persistent Spatial State class.
+- [x] **Advanced Features**: PDF Parser for blueprints, Persistent Spatial State class.
 
 ### 🛒 Sprint 3: The Market (In Progress)
 > *Goal: Connect physics to real-world economics.*
