@@ -44,7 +44,6 @@ def get_room_state():
     """Returns the current summary of the room: area, sources, and total lux."""
     return room_state.get_summary()
 
-# --- MARKET TOOL WRAPPER ---
 def search_market_tool(query: str):
     """
     Multipurpose Market Tool.
@@ -55,10 +54,8 @@ def search_market_tool(query: str):
     """
     print(f"\n[MAIN AGENT] 🛒 Market Request: '{query}'...")
     data = search_product_data(query)
-    
     if "error" in data:
         return f"Market Error: {data['error']}"
-    
     return json.dumps(data, indent=2)
 
 def read_pdf_file(file_path: str) -> str:
@@ -74,19 +71,36 @@ def read_pdf_file(file_path: str) -> str:
     except Exception as e:
         return f"Error reading PDF: {str(e)}"
 
+def consult_standards_kb(topic: str) -> str:
+    """
+    Reads the Smart Home Standards Knowledge Base.
+    Use this when user asks about Zigbee, Matter, Hubs, or compatibility.
+    """
+    kb_path = "data/smart_home_standards.md"
+    try:
+        if not os.path.exists(kb_path):
+            return "Error: Knowledge Base file not found at data/smart_home_standards.md"
+        
+        print(f"\n[MAIN AGENT] 📖 Reading Standards for: '{topic}'...")
+        with open(kb_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        return f"--- KNOWLEDGE BASE ({topic}) ---\n{content}"
+    except Exception as e:
+        return f"Error reading KB: {str(e)}"
+
 # --- SYSTEM PROMPT ---
 SPATIAL_ENGINEER_PROMPT = """
-You are the Spatial Engine AI. You combine Optical Physics with Real-World Economics.
+You are the Spatial Engine AI. You combine Optical Physics, Economics, and Smart Home Standards.
 
 CORE PROTOCOL:
 
-1. **VISUAL AUDIT**:
-   - Analyze the room (Area, Materials).
-   - CALL `set_room_parameters`.
+1. **VISUAL/STATE AUDIT**: 
+   - Analyze room, set parameters (`set_room_parameters`), check Lux levels (`get_room_state`).
 
-2. **SIMULATION**:
-   - Check current Lux (`get_room_state`).
-   - If <500 Lux, identify the deficit.
+2. **COMPATIBILITY CHECK (Critical New Step)**:
+   - If recommending smart lights (Hue, Zigbee, Matter), CALL `consult_standards_kb`.
+   - Verify: Does the user need a Hub? Is the dimmer compatible?
+   - Warn the user strictly if extra hardware is needed.
 
 3. **PROCUREMENT (Market Search)**:
    - **Step A (Product)**: Find a suitable lamp. Query example: "Price of 1600 lumen LED bulb Philips".
@@ -103,25 +117,27 @@ CORE PROTOCOL:
      - `kwh_cost_usd`: From Step B (default 0.17 if search fails).
 
 5. **REPORTING**:
-   - Summarize the Physics (Lux improvement).
-   - Summarize the Economics (ROI & Payback time).
+   - Physics (Lux improvements).
+   - Compatibility (Hub requirements/Warnings).
+   - Economics (ROI & Payback time).
 """
 
 # --- AGENT ---
 root_agent = Agent(
     name="spatial_engine_agent",
     model="gemini-3-pro-preview",
-    description="Spatial AI with Physics and Market Logic.",
+    description="Spatial AI with Physics, Market Logic, and Standards Knowledge.",
     instruction=SPATIAL_ENGINEER_PROMPT,
     tools=[
-        calculate_lux_at_point, 
-        generate_optimization_report, 
-        calculate_roi_and_savings, 
+        calculate_lux_at_point,
+        generate_optimization_report,
+        calculate_roi_and_savings,
         set_room_parameters,
         add_light_to_room,
         get_room_state,
         read_pdf_file,
-        search_market_tool
+        search_market_tool,
+        consult_standards_kb
     ]
 )
 
@@ -136,11 +152,9 @@ async def setup_session_and_runner():
 async def call_agent_async(query, image_path=None):
     print(f"User Query: {query}\n" + "="*50)
     parts = [types.Part(text=query)]
-    
     if image_path:
         path = Path(image_path)
         if path.exists():
-            print(f"📎 Attaching image: {image_path} ({path.stat().st_size} bytes)")
             image_data = path.read_bytes()
             parts.append(types.Part(inline_data=types.Blob(mime_type="image/jpeg", data=image_data)))
     
@@ -159,10 +173,8 @@ async def call_agent_async(query, image_path=None):
                         print(f"\n🛠️ TOOL CALL: {part.function_call.name}")
                         print(f"   Args: {part.function_call.args}")
         except Exception as e:
-            print(f"\n[Log]: Event processing detail: {e}")
-
+            print(f"\n[Log]: Event error: {e}")
     print("\n" + "="*50)
-    print("🏁 Session Finished")
 
 if __name__ == "__main__":
     # test_query = "I have a 20 sqm home office with only one 800 lumen bulb. It feels too dark for working. Calculate exactly how many lumens I am missing for standard office work (500 lux) and find me a suitable lamp on amazon."
@@ -219,20 +231,23 @@ if __name__ == "__main__":
     # else:
     #     print("⚠️ File not found, run create_pdf.py first!")
 
-    # FINAL INTEGRATION TEST
-    # Мы просим агента:
-    # 1. Оценить комнату (симуляция)
-    # 2. Найти лампу Philips (рынок)
-    # 3. Найти тариф в Нью-Йорке (рынок)
-    # 4. Посчитать окупаемость (ROI)
+    # INTEGRATION TEST
+    # query = """
+    # I have a dark 15 sqm room with white walls and one old 100W bulb.
     
-    query = """
-    I have a dark 15 sqm room with white walls and one old 100W bulb.
-    
-    Please:
-    1. Update the room state.
-    2. Find a Philips LED bulb (1500+ lumens) and the current electricity rate in New York.
-    3. Calculate the ROI if I switch to this new bulb using the specific New York rate.
-    """
+    # Please:
+    # 1. Update the room state.
+    # 2. Find a Philips LED bulb (1500+ lumens) and the current electricity rate in New York.
+    # 3. Calculate the ROI if I switch to this new bulb using the specific New York rate.
+    # """
 
+    # asyncio.run(call_agent_async(query))
+
+    # TEST TASK 24: Verification of standards
+    query = """
+    I want to buy Philips Hue bulbs for my home office. 
+    1. Do I need extra hardware for them to work reliably?
+    2. Can I use my existing wall dimmer switch?
+    Check your knowledge base for standards.
+    """
     asyncio.run(call_agent_async(query))
