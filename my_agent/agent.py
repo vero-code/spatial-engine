@@ -18,7 +18,7 @@ from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
-from physics_engine import calculate_lux_at_point, generate_optimization_report, calculate_roi_and_savings
+from physics_engine import calculate_lux_at_point, generate_optimization_report, calculate_roi_and_savings, check_health_compliance
 from market_agent import search_product_data
 
 APP_NAME="spatial_engine_core"
@@ -138,18 +138,22 @@ CORE PROTOCOL:
    - CALL `set_room_parameters`.
    - CALL `get_room_state` to check Lux levels.
 
-2. **COMPATIBILITY CHECK**:
+2. **HEALTH CHECK**:
+   - Call `check_health_compliance(lux_level, room_type)`.
+   - If FAIL: You MUST recommend adding lights to meet the ISO standard.
+
+3. **COMPATIBILITY CHECK**:
    - If recommending smart lights (Hue, Zigbee, Matter), CALL `consult_standards_kb`.
    - Verify: Does the user need a Hub? Is the dimmer compatible?
    - Warn the user strictly if extra hardware is needed.
 
-3. **PROCUREMENT**:
+4. **PROCUREMENT**:
    - **Step A (Product)**: Find a suitable lamp. Query example: "Price of 1600 lumen LED bulb Philips".
      - Extract `price_usd` and `watts`.
    - **Step B (Rates)**: Find local electricity cost. Query example: "Electricity rate in New York".
      - Extract `rate_usd_kwh`.
 
-4. **FINANCIAL ANALYSIS**:
+5. **FINANCIAL ANALYSIS**:
    - CALL `calculate_roi_and_savings`.
    - Inputs:
      - `old_watts`: Assume 60W or 100W if replacing old bulbs.
@@ -157,11 +161,12 @@ CORE PROTOCOL:
      - `new_bulb_price`: From Step A.
      - `kwh_cost_usd`: From Step B (default 0.17 if search fails).
 
-5. **CONFIGURATION**:
+6. **CONFIGURATION**:
    - If the user asks for "setup", "scenes", "config", or "JSON", CALL `generate_scenarios_config`.
    - Output the JSON block clearly.
 
-6. **REPORTING**:
+7. **REPORTING**:
+   - Report Health Pass/Fail status first.
    - Summarize Physics (Lux).
    - Summarize Economics (ROI).
    - Summarize Compatibility (Hubs).
@@ -172,7 +177,7 @@ CORE PROTOCOL:
 root_agent = Agent(
     name="spatial_engine_agent",
     model="gemini-3-pro-preview",
-    description="Spatial AI with Physics, Market Logic, and Standards Knowledge.",
+    description="Spatial AI with Physics, Market Logic, Standards, Health Checks, and Config Generation.",
     instruction=SPATIAL_ENGINEER_PROMPT,
     tools=[
         calculate_lux_at_point,
@@ -184,7 +189,8 @@ root_agent = Agent(
         read_pdf_file,
         search_market_tool,
         consult_standards_kb,
-        generate_scenarios_config
+        generate_scenarios_config,
+        check_health_compliance
     ]
 )
 
@@ -300,9 +306,17 @@ if __name__ == "__main__":
     # asyncio.run(call_agent_async(query))
 
     # TEST TASK 25: Generate Smart Home config
+    # query = """
+    # I have updated my room with a Philips Hue bulb.
+    # Please generate a JSON configuration file for my Home Assistant 
+    # with scenes for working, relaxing, and watching movies.
+    # """
+    # asyncio.run(call_agent_async(query))
+
+    # TEST TASK 27: Health Check
     query = """
-    I have updated my room with a Philips Hue bulb.
-    Please generate a JSON configuration file for my Home Assistant 
-    with scenes for working, relaxing, and watching movies.
+    I have a 20 sqm office with one 800 lumen bulb. 
+    1. Update the room state.
+    2. Check if this lighting is safe for work (Health Check).
     """
     asyncio.run(call_agent_async(query))

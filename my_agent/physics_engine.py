@@ -108,6 +108,31 @@ def calculate_roi_and_savings(
     print(f"[PHYSICS ENGINE]: ROI Calculated. Payback: {payback_months} months.")
     return json.dumps(data)
 
+def check_health_compliance(lux_level: float, room_type: str = "office") -> str:
+    """
+    Verifies if the lighting meets ISO/SanPiN health standards.
+    room_type: 'office', 'living_room', 'corridor', 'kitchen'.
+    Returns a PASS/FAIL verdict with specific deficit calculation.
+    """
+    standards = {
+        "office": 500,
+        "kitchen": 300,
+        "living_room": 150,
+        "corridor": 100,
+        "bedroom": 150
+    }
+    
+    r_type = room_type.lower()
+    if "office" in r_type or "work" in r_type: target = 500
+    elif "living" in r_type: target = 150
+    else: target = standards.get(r_type, 300)
+    
+    if lux_level >= target:
+        return f"✅ PASS: {lux_level:.1f} Lux meets the standard for {room_type} (Target: {target} Lux)."
+    else:
+        deficit = target - lux_level
+        return f"⚠️ FAIL: {lux_level:.1f} Lux is unsafe for {room_type}. Target is {target} Lux. You need +{deficit:.1f} Lux to avoid eye strain."
+
 if __name__ == "__main__":
     print("--- TESTING ROI CALCULATOR ---")
     result = calculate_roi_and_savings(
