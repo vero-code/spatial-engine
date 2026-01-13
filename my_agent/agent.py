@@ -88,27 +88,68 @@ def consult_standards_kb(topic: str) -> str:
     except Exception as e:
         return f"Error reading KB: {str(e)}"
 
+def generate_scenarios_config(room_name: str) -> str:
+    """
+    Generates a JSON configuration for Smart Home Hubs (Home Assistant/HomeKit).
+    Creates presets: Focus, Relax, Movie.
+    """
+    lights = [src['name'] for src in room_state.light_sources]
+    if not lights:
+        lights = ["Main Ceiling Light"] # Fallback
+
+    config = {
+        "room": room_name,
+        "generated_by": "Spatial Engine AI",
+        "devices": lights,
+        "scenes": {
+            "morning_focus": {
+                "brightness_pct": 100,
+                "color_temp_kelvin": 4500,
+                "description": "High blue-light content for wakefulness"
+            },
+            "work_day": {
+                "brightness_pct": 80,
+                "color_temp_kelvin": 4000,
+                "description": "Neutral white for standard tasks"
+            },
+            "evening_relax": {
+                "brightness_pct": 50,
+                "color_temp_kelvin": 2700,
+                "description": "Warm white to simulate sunset"
+            },
+            "night_movie": {
+                "brightness_pct": 20,
+                "color_temp_kelvin": 2000,
+                "description": "Very warm, dim light to preserve melatonin"
+            }
+        }
+    }
+    
+    return json.dumps(config, indent=2)
+
 # --- SYSTEM PROMPT ---
 SPATIAL_ENGINEER_PROMPT = """
-You are the Spatial Engine AI. You combine Optical Physics, Economics, and Smart Home Standards.
+You are the Spatial Engine AI. You combine Optical Physics, Economics, Smart Home Standards, and Configuration Logic.
 
 CORE PROTOCOL:
 
 1. **VISUAL/STATE AUDIT**: 
-   - Analyze room, set parameters (`set_room_parameters`), check Lux levels (`get_room_state`).
+   - Analyze the room (Area, Materials).
+   - CALL `set_room_parameters`.
+   - CALL `get_room_state` to check Lux levels.
 
-2. **COMPATIBILITY CHECK (Critical New Step)**:
+2. **COMPATIBILITY CHECK**:
    - If recommending smart lights (Hue, Zigbee, Matter), CALL `consult_standards_kb`.
    - Verify: Does the user need a Hub? Is the dimmer compatible?
    - Warn the user strictly if extra hardware is needed.
 
-3. **PROCUREMENT (Market Search)**:
+3. **PROCUREMENT**:
    - **Step A (Product)**: Find a suitable lamp. Query example: "Price of 1600 lumen LED bulb Philips".
      - Extract `price_usd` and `watts`.
    - **Step B (Rates)**: Find local electricity cost. Query example: "Electricity rate in New York".
      - Extract `rate_usd_kwh`.
 
-4. **FINANCIAL ANALYSIS (ROI)**:
+4. **FINANCIAL ANALYSIS**:
    - CALL `calculate_roi_and_savings`.
    - Inputs:
      - `old_watts`: Assume 60W or 100W if replacing old bulbs.
@@ -116,10 +157,15 @@ CORE PROTOCOL:
      - `new_bulb_price`: From Step A.
      - `kwh_cost_usd`: From Step B (default 0.17 if search fails).
 
-5. **REPORTING**:
-   - Physics (Lux improvements).
-   - Compatibility (Hub requirements/Warnings).
-   - Economics (ROI & Payback time).
+5. **CONFIGURATION**:
+   - If the user asks for "setup", "scenes", "config", or "JSON", CALL `generate_scenarios_config`.
+   - Output the JSON block clearly.
+
+6. **REPORTING**:
+   - Summarize Physics (Lux).
+   - Summarize Economics (ROI).
+   - Summarize Compatibility (Hubs).
+   - Provide Config if requested.
 """
 
 # --- AGENT ---
@@ -137,7 +183,8 @@ root_agent = Agent(
         get_room_state,
         read_pdf_file,
         search_market_tool,
-        consult_standards_kb
+        consult_standards_kb,
+        generate_scenarios_config
     ]
 )
 
@@ -244,10 +291,18 @@ if __name__ == "__main__":
     # asyncio.run(call_agent_async(query))
 
     # TEST TASK 24: Verification of standards
+    # query = """
+    # I want to buy Philips Hue bulbs for my home office. 
+    # 1. Do I need extra hardware for them to work reliably?
+    # 2. Can I use my existing wall dimmer switch?
+    # Check your knowledge base for standards.
+    # """
+    # asyncio.run(call_agent_async(query))
+
+    # TEST TASK 25: Generate Smart Home config
     query = """
-    I want to buy Philips Hue bulbs for my home office. 
-    1. Do I need extra hardware for them to work reliably?
-    2. Can I use my existing wall dimmer switch?
-    Check your knowledge base for standards.
+    I have updated my room with a Philips Hue bulb.
+    Please generate a JSON configuration file for my Home Assistant 
+    with scenes for working, relaxing, and watching movies.
     """
     asyncio.run(call_agent_async(query))
