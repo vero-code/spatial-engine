@@ -58,10 +58,17 @@ def generate_optimization_report(room_area_sqm: float, target_lux: int, current_
     print(f"[PHYSICS ENGINE]: Report Generated. Deficit: {deficiency}")
     return json.dumps(data)
 
-def calculate_roi_and_savings(old_watts: int, new_watts: int, hours_per_day: float = 8.0, kwh_cost_usd: float = 0.15) -> str:
+def calculate_roi_and_savings(
+    old_watts: float,
+    new_watts: float,
+    new_bulb_price: float = 0.0,
+    hours_per_day: float = 5.0,
+    kwh_cost_usd: float = 0.17
+) -> str:
     """
     Calculates energy savings and ROI for switching to efficient lighting.
-    
+    Now includes Payback Period.
+
     Args:
         old_watts: Wattage of the current bulb (e.g., 60W incandescent).
         new_watts: Wattage of the replacement bulb (e.g., 9W LED).
@@ -80,14 +87,32 @@ def calculate_roi_and_savings(old_watts: int, new_watts: int, hours_per_day: flo
     
     # Calculate the money
     money_saved_annual = kwh_saved_annual * kwh_cost_usd
+    money_saved_daily = money_saved_annual / 365
+
     co2_saved_kg = kwh_saved_annual * 0.385  # Average emission coefficient
     
+    # Payback Period
+    payback_months = 0.0
+    if new_bulb_price > 0 and money_saved_annual > 0:
+        years_to_payback = new_bulb_price / money_saved_annual
+        payback_months = round(years_to_payback * 12, 1)
+
     data = {
         "annual_savings_usd": round(money_saved_annual, 2),
+        "payback_period_months": payback_months,
         "kwh_saved_year": round(kwh_saved_annual, 1),
         "co2_reduction_kg": round(co2_saved_kg, 1),
         "message": f"Switching saves ${round(money_saved_annual, 2)} per year and reduces CO2 by {round(co2_saved_kg, 1)}kg."
     }
     
-    print(f"[PHYSICS ENGINE]: ROI Calculated. Savings: ${data['annual_savings_usd']}/yr")
+    print(f"[PHYSICS ENGINE]: ROI Calculated. Payback: {payback_months} months.")
     return json.dumps(data)
+
+if __name__ == "__main__":
+    print("--- TESTING ROI CALCULATOR ---")
+    result = calculate_roi_and_savings(
+        old_watts=100,
+        new_watts=14,
+        new_bulb_price=4.99
+    )
+    print(result)
