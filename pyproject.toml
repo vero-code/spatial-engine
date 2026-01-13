@@ -8,6 +8,7 @@ dependencies = [
     "fpdf2>=2.8.5",
     "google-adk>=1.22.0",
     "google-genai>=1.57.0",
+    "nest-asyncio>=1.6.0",
     "pypdf>=6.6.0",
     "python-dotenv>=1.2.1",
 ]

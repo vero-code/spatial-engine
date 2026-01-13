@@ -3,6 +3,8 @@ import os
 import json
 import re
 from dotenv import load_dotenv
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 load_dotenv()
 
@@ -11,7 +13,6 @@ from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.adk.tools import google_search
 from google.genai import types
-import asyncio
 
 APP_NAME = "market_search_service"
 USER_ID = "spatial_engine_core"
@@ -19,54 +20,63 @@ SESSION_ID = "market_session_v1"
 
 # --- MARKET AGENT PROMPT ---
 MARKET_PROMPT = """
-You are the Market Procurement Agent for the Spatial Engine system.
+You are the Market Procurement Agent.
 
 YOUR GOAL:
-Search for the requested lighting product and return technical/financial data in STRICT JSON format.
+Search for (1) Lighting products OR (2) Electricity rates, and return STRICT JSON.
 
 INSTRUCTIONS:
-1. Use `Google Search` to find the product.
-2. Extract:
-   - "name": Product title.
-   - "price_usd": Price for ONE unit (calculate if pack). Type: Float.
-   - "lumens": Brightness. Type: Int.
-   - "watts": Power consumption. Type: Float.
-   - "link": URL to retailer.
-3. OUTPUT FORMAT:
-   Return ONLY a valid JSON object. No markdown formatting, no conversational text.
-   
-Example:
-{
-  "name": "Philips LED A19",
-  "price_usd": 6.99,
-  "lumens": 1500,
-  "watts": 14.5,
-  "link": "https://amazon.com/..."
-}
+
+--- MODE A: PRODUCT SEARCH ---
+If the user asks for a lamp/bulb:
+1. Find "price_usd" (float), "watts" (float), "lumens" (int), "name" (string).
+2. JSON Format:
+   {
+     "type": "product",
+     "name": "Philips LED A19",
+     "price_usd": 6.99,
+     "lumens": 1500,
+     "watts": 14.5,
+     "link": "http..."
+   }
+
+--- MODE B: RATE FINDER ---
+If the user asks for "electricity rate" in a location:
+1. Search for "residential electricity rate kwh [Location] 2024 2025".
+2. Extract the average price per kWh in USD.
+3. JSON Format:
+   {
+     "type": "rate",
+     "location": "California",
+     "rate_usd_kwh": 0.28,
+     "source": "bls.gov or local provider"
+   }
+
+--- RULES ---
+1. RETURN ONLY JSON. No markdown texts.
+2. If exact rate is unknown, use the latest regional average.
 """
 
 # --- MARKET AGENT ---
 market_agent_core = Agent(
     name="market_agent",
     model="gemini-3-pro-preview",
-    description="An agent that searches the web for products and prices, and returns product data in JSON.",
+    description="Searches for products and electricity rates in JSON.",
     instruction=MARKET_PROMPT,
     tools=[google_search]
 )
 
 def clean_json_string(text: str) -> dict:
-    """Helper to extract JSON from Markdown blocks"""
+    """Helper to extract JSON from Markdown blocks or raw text"""
     try:
-        match = re.search(r"```json\s*(.*?)\s*```", text, re.DOTALL)
+        match = re.search(r"(\{.*\})", text, re.DOTALL)
         if match:
             json_str = match.group(1)
+            return json.loads(json_str)
         else:
-            json_str = text
-            
-        return json.loads(json_str)
+            return json.loads(text)
     except Exception as e:
-        print(f"[Parser Error] Could not parse JSON: {text}")
-        return {"error": "Failed to parse market data", "raw_text": text}
+        return {"error": "Failed to parse JSON", "raw_text": text}
 
 async def _run_market_search(query: str):
     session_service = InMemorySessionService()
@@ -85,25 +95,37 @@ async def _run_market_search(query: str):
     
     return final_text
 
+def _run_in_thread(query: str):
+    """Internal helper to run asyncio.run in a separate thread"""
+    return asyncio.run(_run_market_search(query))
+
 def search_product_data(query: str) -> dict:
     """
-    Returns a Dictionary with product data (price, lumens, etc).
+    Universal entry point for Market Agent.
+    Uses ThreadPoolExecutor to isolate the async loop from the main agent.
+    This fixes 'nested loop' errors on Windows/Python 3.14.
     """
     try:
-        raw_text = asyncio.run(_run_market_search(query))
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(_run_in_thread, query)
+            raw_text = future.result()
+            
         return clean_json_string(raw_text)
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": f"Thread Error: {str(e)}"}
 
 if __name__ == "__main__":
-    print("Testing Market Agent (JSON Parser)...")
+    print("Testing Rate Finder...")
     
-    # Test 1: Lamp
-    data = search_product_data("Find best price for 1500 lumen LED bulb Philips")
-    print("\n--- LAMP DATA (DICT) ---")
+    location = "New York"
+    query = f"What is the average electricity rate price per kwh in {location}?"
+    
+    data = search_product_data(query)
+    
+    print(f"\n--- RATE DATA FOR {location} ---")
     print(data)
-    print(f"Type: {type(data)}")
     
-    # Test 2: Access fields
-    if "price_usd" in data:
-        print(f"\nCalculated Cost for 10 bulbs: ${data['price_usd'] * 10}")
+    if "rate_usd_kwh" in data:
+        print(f"✅ Success! Found rate: ${data['rate_usd_kwh']}/kWh")
+    else:
+        print("❌ Failed to find rate.")
