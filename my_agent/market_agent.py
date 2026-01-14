@@ -18,6 +18,25 @@ APP_NAME = "market_search_service"
 USER_ID = "spatial_engine_core"
 SESSION_ID = "market_session_v1"
 
+FALLBACK_DEFAULTS = {
+    "product": {
+        "type": "product",
+        "name": "Generic LED Bulb (Offline Estimate)",
+        "price_usd": 5.00,
+        "lumens": 800,
+        "watts": 9.0,
+        "is_dimmable": False,
+        "protocol": "None",
+        "link": "N/A (Offline Mode)"
+    },
+    "rate": {
+        "type": "rate",
+        "location": "US Average",
+        "rate_usd_kwh": 0.17,
+        "source": "Fallback Database"
+    }
+}
+
 # --- MARKET AGENT PROMPT ---
 MARKET_PROMPT = """
 You are the Market Procurement Agent.
@@ -108,16 +127,24 @@ def _run_in_thread(query: str):
 def search_product_data(query: str) -> dict:
     """
     Universal entry point for Market Agent.
-    Uses ThreadPoolExecutor to isolate the async loop from the main agent.
+    If search fails, returns default averages.
     """
     try:
         with ThreadPoolExecutor(max_workers=1) as executor:
             future = executor.submit(_run_in_thread, query)
             raw_text = future.result()
-            
-        return clean_json_string(raw_text)
+        data = clean_json_string(raw_text)
+        if "error" in data:
+            raise Exception("Search API Error")
+        return data
+
     except Exception as e:
-        return {"error": f"Thread Error: {str(e)}"}
+        print(f"\n[⚠️ MARKET AGENT WARNING] Search failed ({str(e)}). Using FALLBACK defaults.")
+        query_lower = query.lower()
+        if "rate" in query_lower or "electricity" in query_lower or "cost" in query_lower:
+            return FALLBACK_DEFAULTS["rate"]
+        else:
+            return FALLBACK_DEFAULTS["product"]
 
 if __name__ == "__main__":
     # print("Testing Rate Finder...")
@@ -135,12 +162,16 @@ if __name__ == "__main__":
     # else:
     #     print("❌ Failed to find rate.")
 
-    print("Testing Feature Verification (Task 28)...")
+    # print("Testing Feature Verification (Task 28)...")
     # Test: Searching for a dimmable bulb
-    data = search_product_data("Price of dimmable Philips Hue A19 bulb")
-    print(data)
+    # data = search_product_data("Price of dimmable Philips Hue A19 bulb")
+    # print(data)
     
-    if data.get("is_dimmable") is True:
-        print("✅ SUCCESS: Recognized as dimmable.")
-    else:
-        print("⚠️ WARNING: Verification failed or product is not dimmable.")
+    # if data.get("is_dimmable") is True:
+    #     print("✅ SUCCESS: Recognized as dimmable.")
+    # else:
+    #     print("⚠️ WARNING: Verification failed or product is not dimmable.")
+
+    print("Testing Fallback Mode (Task 29)...")
+    print("Fallback Rate:", FALLBACK_DEFAULTS["rate"])
+    print("Fallback Product:", FALLBACK_DEFAULTS["product"])
