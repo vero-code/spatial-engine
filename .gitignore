@@ -34,4 +34,7 @@ __pycache__/
 # Folders
 media/
 downloads/
-data/
+
+# Data
+data/*
+!data/smart_home_standards.md
