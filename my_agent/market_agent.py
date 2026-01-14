@@ -29,14 +29,19 @@ INSTRUCTIONS:
 
 --- MODE A: PRODUCT SEARCH ---
 If the user asks for a lamp/bulb:
-1. Find "price_usd" (float), "watts" (float), "lumens" (int), "name" (string).
-2. JSON Format:
+1. Find basic specs: "price_usd" (float), "watts" (float), "lumens" (int), "name" (string).
+2. **VERIFY CRITICAL FEATURES**:
+   - Check if it is explicitly "dimmable" or "non-dimmable".
+   - Check connectivity (Zigbee, WiFi, Bluetooth, or None).
+3. JSON Format:
    {
      "type": "product",
      "name": "Philips LED A19",
      "price_usd": 6.99,
      "lumens": 1500,
      "watts": 14.5,
+     "is_dimmable": true,
+     "protocol": "Zigbee",
      "link": "http..."
    }
 
@@ -55,13 +60,14 @@ If the user asks for "electricity rate" in a location:
 --- RULES ---
 1. RETURN ONLY JSON. No markdown texts.
 2. If exact rate is unknown, use the latest regional average.
+3. If "dimmable" is not mentioned in the product page, assume "false".
 """
 
 # --- MARKET AGENT ---
 market_agent_core = Agent(
     name="market_agent",
     model="gemini-3-pro-preview",
-    description="Searches for products and electricity rates in JSON.",
+    description="Searches for products, rates, and verifies technical specs (dimmable, protocol).",
     instruction=MARKET_PROMPT,
     tools=[google_search]
 )
@@ -103,7 +109,6 @@ def search_product_data(query: str) -> dict:
     """
     Universal entry point for Market Agent.
     Uses ThreadPoolExecutor to isolate the async loop from the main agent.
-    This fixes 'nested loop' errors on Windows/Python 3.14.
     """
     try:
         with ThreadPoolExecutor(max_workers=1) as executor:
@@ -115,17 +120,27 @@ def search_product_data(query: str) -> dict:
         return {"error": f"Thread Error: {str(e)}"}
 
 if __name__ == "__main__":
-    print("Testing Rate Finder...")
+    # print("Testing Rate Finder...")
     
-    location = "New York"
-    query = f"What is the average electricity rate price per kwh in {location}?"
+    # location = "New York"
+    # query = f"What is the average electricity rate price per kwh in {location}?"
     
-    data = search_product_data(query)
+    # data = search_product_data(query)
     
-    print(f"\n--- RATE DATA FOR {location} ---")
+    # print(f"\n--- RATE DATA FOR {location} ---")
+    # print(data)
+    
+    # if "rate_usd_kwh" in data:
+    #     print(f"✅ Success! Found rate: ${data['rate_usd_kwh']}/kWh")
+    # else:
+    #     print("❌ Failed to find rate.")
+
+    print("Testing Feature Verification (Task 28)...")
+    # Test: Searching for a dimmable bulb
+    data = search_product_data("Price of dimmable Philips Hue A19 bulb")
     print(data)
     
-    if "rate_usd_kwh" in data:
-        print(f"✅ Success! Found rate: ${data['rate_usd_kwh']}/kWh")
+    if data.get("is_dimmable") is True:
+        print("✅ SUCCESS: Recognized as dimmable.")
     else:
-        print("❌ Failed to find rate.")
+        print("⚠️ WARNING: Verification failed or product is not dimmable.")

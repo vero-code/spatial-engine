@@ -147,9 +147,10 @@ CORE PROTOCOL:
    - Verify: Does the user need a Hub? Is the dimmer compatible?
    - Warn the user strictly if extra hardware is needed.
 
-4. **PROCUREMENT**:
-   - **Step A (Product)**: Find a suitable lamp. Query example: "Price of 1600 lumen LED bulb Philips".
+4. **PROCUREMENT & VERIFICATION**:
+   - **Step A (Product Search)**: Find a suitable lamp. Query example: "Price of 1600 lumen LED bulb Philips".
      - Extract `price_usd` and `watts`.
+     - **Verification**: Check the JSON output. If the user asked for "Dimmable", confirm `is_dimmable` is true. If not, REJECT and search again.
    - **Step B (Rates)**: Find local electricity cost. Query example: "Electricity rate in New York".
      - Extract `rate_usd_kwh`.
 
@@ -167,6 +168,7 @@ CORE PROTOCOL:
 
 7. **REPORTING**:
    - Report Health Pass/Fail status first.
+   - Confirm Verified Specs (e.g., "Verified Dimmable: Yes").
    - Summarize Physics (Lux).
    - Summarize Economics (ROI).
    - Summarize Compatibility (Hubs).
@@ -314,9 +316,16 @@ if __name__ == "__main__":
     # asyncio.run(call_agent_async(query))
 
     # TEST TASK 27: Health Check
+    # query = """
+    # I have a 20 sqm office with one 800 lumen bulb. 
+    # 1. Update the room state.
+    # 2. Check if this lighting is safe for work (Health Check).
+    # """
+    # asyncio.run(call_agent_async(query))
+
+    # TEST TASK 28: Search Verification
     query = """
-    I have a 20 sqm office with one 800 lumen bulb. 
-    1. Update the room state.
-    2. Check if this lighting is safe for work (Health Check).
+    I need a DIMMABLE LED bulb for my bedroom. 
+    Find one, VERIFY it is dimmable in the specs, and confirm to me.
     """
     asyncio.run(call_agent_async(query))
