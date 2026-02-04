@@ -72,11 +72,11 @@ const VisionAudit: React.FC<VisionAuditProps> = ({ onAuditComplete }) => {
         <h3 className="w-full text-sm font-bold uppercase tracking-widest text-gray-500 mb-6">Vision Audit Console</h3>
         
         <div 
-          className="w-full h-64 border-2 border-dashed border-border-muted rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-accent-primary transition-colors group relative overflow-hidden"
+          className="w-full h-[500px] border-2 border-dashed border-border-muted rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-accent-primary transition-colors group relative overflow-hidden"
           onClick={() => document.getElementById('vision-upload')?.click()}
         >
           {heatmapOverlay && showHeatmap ? (
-             <img src={`data:image/png;base64,${heatmapOverlay}`} alt="Heatmap Overlay" className="h-full w-full object-cover" />
+             <img src={`data:image/png;base64,${heatmapOverlay}`} alt="Heatmap Overlay" className="h-full w-full object-contain" />
           ) : image ? (
             <img src={image} alt="Upload" className="h-full w-full object-cover opacity-60" />
           ) : (

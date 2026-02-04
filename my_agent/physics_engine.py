@@ -205,8 +205,8 @@ def generate_roi_chart(old_watts: float, new_watts: float, price: float, hours: 
 
 def overlay_heatmap_on_image(image_bytes: bytes) -> str:
     """
-    Overlays a light distribution heatmap on the provided image.
-    Returns: Base64 encoded PNG string.
+    Overlays a light distribution heatmap AND a technical measurement grid.
+    Matches the style of a CAD/Engineering interface.
     """
     import matplotlib
     matplotlib.use('Agg')
@@ -216,48 +216,80 @@ def overlay_heatmap_on_image(image_bytes: bytes) -> str:
     import base64
     from PIL import Image
 
-    print(f"[PHYSICS ENGINE]: Processing Vision Audit - Overlaying Heatmap...")
+    print(f"[PHYSICS ENGINE]: Processing Vision Audit - Overlaying Heatmap & Tech Grid...")
 
     try:
         # Load Image
         img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
         w, h = img.size
         
-        # Create figure matching image aspect
+        # Create figure matching image aspect ratio
+        # DPI = 100 ensures readable font size relative to image
         dpi = 100
         fig, ax = plt.subplots(figsize=(w/dpi, h/dpi), dpi=dpi)
         
-        # Remove axes completely
-        ax.set_axis_off()
-        plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
-        plt.margins(0,0)
+        # --- 1. Draw Background Image ---
+        # extent sets the coordinate system [left, right, bottom, top]
+        # We invert Y (h, 0) to match image coordinates (0,0 is top-left)
+        ax.imshow(img, extent=[0, w, h, 0])
         
-        # Draw background image
-        ax.imshow(img)
-        
-        # Generate Heatmap Logic (Simulated Spot Light in Center)
-        # Create a grid of coordinates
+        # --- 2. Generate Heatmap Logic ---
         y_indices, x_indices = np.mgrid[0:h, 0:w]
-        
-        # Center of the image
         cy, cx = h // 2, w // 2
-        
-        # Distance from center squared
         dist_sq = (x_indices - cx)**2 + (y_indices - cy)**2
-        
-        # Standard deviation for the gaussian (spread of light)
-        sigma = min(w, h) / 3
-        
-        # Gaussian distribution
+        sigma = min(w, h) / 3 
         heatmap_data = np.exp(-dist_sq / (2 * sigma**2))
         
-        # Overlay Heatmap with transparency
-        # cmap='plasma' (same as before), alpha=0.4
-        ax.imshow(heatmap_data, cmap='plasma', alpha=0.4, extent=[0, w, h, 0])
+        # Overlay Heatmap (Transparent)
+        ax.imshow(heatmap_data, cmap='plasma', alpha=0.35, extent=[0, w, h, 0])
+
+        # Add Contour Lines (Isolux Contour Map)
+        # "Isolux" means lines of equal illuminance
+        levels = np.linspace(0.1, 1.0, 10) 
+        CS = ax.contour(heatmap_data, levels=levels, extent=[0, w, h, 0], 
+                   colors='white', alpha=0.3, linewidths=0.5)
+        ax.clabel(CS, inline=True, fontsize=6, fmt='%.1f', colors='white')
         
+        # --- 3. Engineering Grid Styling (The "Tech" Look) ---
+        
+        # Enable Grid
+        # alpha=0.3 makes it visible but not overwhelming
+        ax.grid(True, which='both', color='white', linestyle='-', linewidth=0.8, alpha=0.3)
+        
+        # Configure Ticks (The Numbers)
+        ax.tick_params(axis='both', which='both', colors='white', labelsize=10, direction='in')
+        
+        # Configure Spines (The Border Box)
+        for spine in ax.spines.values():
+            spine.set_edgecolor('white')
+            spine.set_linewidth(1)
+            spine.set_alpha(0.5) # Semi-transparent border
+            
+        # Optional: Add Label Units
+        ax.set_xlabel("X Coordinates (px)", color='white', fontsize=6, alpha=0.7)
+        ax.set_ylabel("Y Coordinates (px)", color='white', fontsize=6, alpha=0.7)
+        
+        # Add Engineering Legend (False Color Display Info)
+        tech_text = (
+            "AUDIT PARAMETERS\n"
+            "----------------\n"
+            "MODE: ISOLUX CONTOUR MAP\n"
+            "VIS: FALSE COLOR DISPLAY\n"
+            f"RES: {w}x{h} | DPI: {dpi}"
+        )
+        props = dict(boxstyle='square', facecolor='black', alpha=0.7, edgecolor='white', linewidth=0.5)
+        ax.text(0.02, 0.98, tech_text, transform=ax.transAxes, fontsize=6,
+                verticalalignment='top', color='#00ff9d', fontfamily='monospace', bbox=props)
+        
+        # Ensure tight layout to remove extra whitespace around the plot
+        plt.tight_layout(pad=0.5)
+
         # Save to buffer
         buf = io.BytesIO()
-        plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0, transparent=True)
+        # transparent=False is important here to keep the black/dark theme of the plot if needed, 
+        # but transparent=True is better for overlaying on UI. 
+        # Let's keep transparent=True so only the content is saved.
+        plt.savefig(buf, format='png', bbox_inches='tight', transparent=True)
         plt.close(fig)
         buf.seek(0)
         
