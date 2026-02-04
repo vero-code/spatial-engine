@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 
 interface VisionAuditProps {
-  onAuditComplete: (area: number, reflection: number) => void;
-  log: (msg: string, type?: string) => void;
+  onAuditComplete: (file: File) => Promise<any>;
 }
 
-const VisionAudit: React.FC<VisionAuditProps> = ({ onAuditComplete, log }) => {
+const VisionAudit: React.FC<VisionAuditProps> = ({ onAuditComplete }) => {
   const [image, setImage] = useState<string | null>(null);
   const [isAuditing, setIsAuditing] = useState(false);
   const [checks, setChecks] = useState([
@@ -18,28 +17,37 @@ const VisionAudit: React.FC<VisionAuditProps> = ({ onAuditComplete, log }) => {
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
       const reader = new FileReader();
+      const file = e.target.files[0];
       reader.onload = (re) => setImage(re.target!.result as string);
-      reader.readAsDataURL(e.target.files[0]);
+      reader.readAsDataURL(file);
+      // We'll store the file on the input element's data attribute or just handle it in runAudit
     }
   };
 
-  const runAudit = () => {
+  const runAudit = async () => {
+    const fileInput = document.getElementById('vision-upload') as HTMLInputElement;
+    if (!fileInput.files?.[0]) return;
+
     setIsAuditing(true);
-    log("[VISION] Initiating spatial scan...", 'system');
-    
+    setChecks(prev => prev.map(c => ({ ...c, status: 'pending' })));
+
+    // Trigger components UI sequence before/during API call
     let step = 0;
     const interval = setInterval(() => {
       if (step < checks.length) {
         setChecks(prev => prev.map((c, i) => i === step ? { ...c, status: 'done' } : c));
-        log(`[VISION] ${checks[step].label} complete.`, 'success');
         step++;
       } else {
         clearInterval(interval);
-        setIsAuditing(false);
-        log("[VISION] Audit complete. Reference Object: Door Frame. Area: 18.5m²", 'success');
-        onAuditComplete(18.5, 0.45);
       }
-    }, 1000);
+    }, 500);
+
+    const result = await onAuditComplete(fileInput.files[0]);
+    setIsAuditing(false);
+    
+    if (!result) {
+       setChecks(prev => prev.map(c => ({ ...c, status: 'pending' })));
+    }
   };
 
   return (

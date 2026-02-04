@@ -47,7 +47,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeSection, setActiveSection }) =>
           <span className="w-2 h-2 bg-accent-secondary rounded-full shadow-[0_0_8px_var(--color-accent-secondary)]"></span>
           <span className="text-accent-secondary uppercase tracking-widest">Core Active</span>
         </div>
-        <p className="text-[10px] text-gray-500 font-mono">v1.0.4 - Gemini 3 Pro</p>
+        <p className="text-[10px] text-gray-500 font-mono">v0.3.0 - Gemini 3 Pro</p>
       </div>
     </nav>
   );

@@ -1,32 +1,38 @@
 import React, { useState } from 'react';
 
 interface PhysicsEngineProps {
-  onCalculateLux: (lux: number) => void;
-  onGenerateReport: (report: any) => void;
+  onCalculateLux: (lumens: number, distance: number, angle: number) => void;
+  onGenerateReport: (area: number, target: number, current: number) => Promise<any>;
+  currentArea: number;
+  currentLumens: number;
 }
 
-const PhysicsEngine: React.FC<PhysicsEngineProps> = ({ onCalculateLux, onGenerateReport }) => {
+const PhysicsEngine: React.FC<PhysicsEngineProps> = ({ 
+  onCalculateLux, 
+  onGenerateReport, 
+  currentArea, 
+  currentLumens 
+}) => {
   const [luxInputs, setLuxInputs] = useState({ lumens: 800, dist: 2.5, angle: 120 });
-  const [optiInputs, setOptiInputs] = useState({ area: 20, target: 150, current: 800 });
+  const [optiInputs, setOptiInputs] = useState({ 
+    area: currentArea || 20, 
+    target: 150, 
+    current: currentLumens || 800 
+  });
   const [report, setReport] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
   const calculateLux = (e: React.FormEvent) => {
     e.preventDefault();
-    const rad = (luxInputs.angle * Math.PI) / 180;
-    const solidAngle = 2 * Math.PI * (1 - Math.cos(rad / 2));
-    const candela = luxInputs.lumens / solidAngle;
-    const res = Math.round(candela / (luxInputs.dist * luxInputs.dist));
-    onCalculateLux(res);
+    onCalculateLux(luxInputs.lumens, luxInputs.dist, luxInputs.angle);
   };
 
-  const generateReport = (e: React.FormEvent) => {
+  const generateReport = async (e: React.FormEvent) => {
     e.preventDefault();
-    const required = optiInputs.area * optiInputs.target;
-    const deficit = Math.max(0, required - optiInputs.current);
-    const bulbs = Math.ceil(deficit / 800);
-    const newReport = { deficit, bulbs, target: optiInputs.target, avg: Math.round(optiInputs.current / optiInputs.area) };
-    setReport(newReport);
-    onGenerateReport(newReport);
+    setLoading(true);
+    const res = await onGenerateReport(optiInputs.area, optiInputs.target, optiInputs.current);
+    setReport(res);
+    setLoading(false);
   };
 
   return (
@@ -37,7 +43,7 @@ const PhysicsEngine: React.FC<PhysicsEngineProps> = ({ onCalculateLux, onGenerat
           <Input label="Lumens (lm)" value={luxInputs.lumens} onChange={v => setLuxInputs({ ...luxInputs, lumens: Number(v) })} />
           <Input label="Distance (m)" value={luxInputs.dist} step={0.1} onChange={v => setLuxInputs({ ...luxInputs, dist: Number(v) })} />
           <Input label="Beam Angle (°)" value={luxInputs.angle} onChange={v => setLuxInputs({ ...luxInputs, angle: Number(v) })} />
-          <button type="submit" className="w-full btn-premium btn-glow mt-4">Calculate Lux</button>
+          <button type="submit" className="w-full btn-premium btn-glow mt-4">Run Physics Engine</button>
         </form>
       </div>
 
@@ -60,27 +66,28 @@ const PhysicsEngine: React.FC<PhysicsEngineProps> = ({ onCalculateLux, onGenerat
               </select>
             </div>
             <Input label="Current Lumens (lm)" value={optiInputs.current} onChange={v => setOptiInputs({ ...optiInputs, current: Number(v) })} />
-            <button type="submit" className="w-full btn-premium btn-glow mt-2">Generate Report</button>
+            <button type="submit" disabled={loading} className="w-full btn-premium btn-glow mt-2">
+              {loading ? 'Synthesizing Report...' : 'Generate Compliance Report'}
+            </button>
           </form>
 
           <div className="bg-black/20 rounded-xl p-6 border-l-4 border-accent-primary">
             {!report ? (
-              <p className="text-gray-500 italic text-sm">Enter parameters to visualize optimization strategy.</p>
+              <p className="text-gray-500 italic text-sm">Enter parameters to visualize optimization strategy through the deterministic core.</p>
             ) : (
               <div className="space-y-4 animate-fade-in">
                 <div>
                   <p className="text-xs uppercase font-bold text-gray-500 mb-1">Status</p>
-                  <p className={`font-bold ${report.deficit > 0 ? 'text-accent-danger' : 'text-accent-secondary'}`}>
-                    {report.deficit > 0 ? 'CRITICAL DEFICIT ⚠️' : 'OPTIMAL COMPLIANCE ✅'}
+                  <p className={`font-bold ${report.status !== 'Optimal' ? 'text-accent-danger' : 'text-accent-secondary'}`}>
+                    {report.status !== 'Optimal' ? 'CRITICAL DEFICIT ⚠️' : 'OPTIMAL COMPLIANCE ✅'}
                   </p>
                 </div>
                 <div className="text-sm space-y-2">
-                  <p>Current average: <span className="text-white font-mono">{report.avg} lux</span></p>
-                  <p>Target standard: <span className="text-white font-mono">{report.target} lux</span></p>
-                  {report.deficit > 0 && (
+                  <p>Current average: <span className="text-white font-mono">{report.analysis.current_lux_avg} lux</span></p>
+                  <p>Target standard: <span className="text-white font-mono">{report.analysis.target_lux} lux</span></p>
+                  {report.deficiency_lumens > 0 && (
                     <p className="text-gray-300 mt-4 leading-relaxed">
-                      Engineering Recommendation: Add <span className="text-accent-primary font-bold">{report.bulbs}</span> more sources 
-                      (approx 800lm each) to reach safe levels.
+                      Engineering Recommendation: <span className="text-accent-primary font-bold">{report.engineering_recommendation}</span>
                     </p>
                   )}
                 </div>

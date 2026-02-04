@@ -1,18 +1,30 @@
 import React, { useState } from 'react';
 
-const EconomicEngine: React.FC = () => {
+interface EconomicEngineProps {
+  baseUrl: string;
+  onLog: (msg: string, type?: string) => void;
+}
+
+const EconomicEngine: React.FC<EconomicEngineProps> = ({ baseUrl, onLog }) => {
   const [inputs, setInputs] = useState({ oldW: 60, newW: 9, price: 5.99, hours: 5, rate: 0.17 });
   const [results, setResults] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
-  const analyze = (e: React.FormEvent) => {
+  const analyze = async (e: React.FormEvent) => {
     e.preventDefault();
-    const savedWatts = inputs.oldW - inputs.newW;
-    const kwhAnnual = (savedWatts * inputs.hours * 365) / 1000;
-    const moneySaved = kwhAnnual * inputs.rate;
-    const co2Saved = kwhAnnual * 0.385;
-    const payback = (inputs.price / (moneySaved / 12)).toFixed(1);
-
-    setResults({ moneySaved: moneySaved.toFixed(2), co2Saved: co2Saved.toFixed(1), payback });
+    setLoading(true);
+    try {
+      const response = await fetch(`${baseUrl}/roi-analysis?old_watts=${inputs.oldW}&new_watts=${inputs.newW}&price=${inputs.price}&hours=${inputs.hours}&rate=${inputs.rate}`, {
+        method: 'POST'
+      });
+      const data = await response.json();
+      setResults(data);
+      onLog(`ROI Analysis complete. Annual savings: $${data.annual_savings_usd}.`, 'success');
+    } catch (err) {
+      onLog(`ROI Analysis failed. check backend connection.`, 'warn');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -27,15 +39,17 @@ const EconomicEngine: React.FC = () => {
           <Input label="Rate ($/kWh)" value={inputs.rate} step={0.01} onChange={v => setInputs({ ...inputs, rate: Number(v) })} />
           
           <div className="md:col-span-2 pt-4">
-            <button type="submit" className="w-full btn-premium btn-glow">Analyze Financial Impact</button>
+            <button type="submit" disabled={loading} className="w-full btn-premium btn-glow">
+              {loading ? 'Performing Economic Simulation...' : 'Analyze Financial Impact'}
+            </button>
           </div>
         </form>
 
         {results && (
           <div className="mt-8 flex justify-around p-6 bg-accent-secondary/5 rounded-xl border border-accent-secondary/20 animate-fade-in">
-            <ResultItem label="Annual Savings" value={`$${results.moneySaved}`} />
-            <ResultItem label="Payback Period" value={`${results.payback} months`} />
-            <ResultItem label="CO₂ Reduction" value={`${results.co2Saved} kg`} />
+            <ResultItem label="Annual Savings" value={`$${results.annual_savings_usd}`} />
+            <ResultItem label="Payback Period" value={`${results.payback_period_months} months`} />
+            <ResultItem label="CO₂ Reduction" value={`${results.co2_reduction_kg} kg`} />
           </div>
         )}
       </div>

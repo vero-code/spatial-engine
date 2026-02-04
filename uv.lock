@@ -1657,6 +1657,7 @@ dependencies = [
     { name = "nest-asyncio" },
     { name = "pypdf" },
     { name = "python-dotenv" },
+    { name = "python-multipart" },
     { name = "uvicorn" },
 ]
 
@@ -1669,6 +1670,7 @@ requires-dist = [
     { name = "nest-asyncio", specifier = ">=1.6.0" },
     { name = "pypdf", specifier = ">=6.6.0" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
+    { name = "python-multipart", specifier = ">=0.0.21" },
     { name = "uvicorn", specifier = ">=0.40.0" },
 ]
 
