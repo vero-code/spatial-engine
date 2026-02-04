@@ -13,6 +13,8 @@ const VisionAudit: React.FC<VisionAuditProps> = ({ onAuditComplete }) => {
     { id: 3, label: 'Shadow Mapping', status: 'pending' },
     { id: 4, label: 'Reference Object Inference', status: 'pending' },
   ]);
+  const [heatmapOverlay, setHeatmapOverlay] = useState<string | null>(null);
+  const [showHeatmap, setShowHeatmap] = useState(false);
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
@@ -22,6 +24,15 @@ const VisionAudit: React.FC<VisionAuditProps> = ({ onAuditComplete }) => {
       reader.readAsDataURL(file);
       // We'll store the file on the input element's data attribute or just handle it in runAudit
     }
+  };
+
+  const handleRemove = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setImage(null);
+    setHeatmapOverlay(null);
+    setShowHeatmap(false);
+    const fileInput = document.getElementById('vision-upload') as HTMLInputElement;
+    if (fileInput) fileInput.value = '';
   };
 
   const runAudit = async () => {
@@ -45,6 +56,11 @@ const VisionAudit: React.FC<VisionAuditProps> = ({ onAuditComplete }) => {
     const result = await onAuditComplete(fileInput.files[0]);
     setIsAuditing(false);
     
+    if (result && result.vision_data && result.vision_data.heatmap_overlay) {
+       setHeatmapOverlay(result.vision_data.heatmap_overlay);
+       setShowHeatmap(true);
+    }
+    
     if (!result) {
        setChecks(prev => prev.map(c => ({ ...c, status: 'pending' })));
     }
@@ -59,7 +75,9 @@ const VisionAudit: React.FC<VisionAuditProps> = ({ onAuditComplete }) => {
           className="w-full h-64 border-2 border-dashed border-border-muted rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-accent-primary transition-colors group relative overflow-hidden"
           onClick={() => document.getElementById('vision-upload')?.click()}
         >
-          {image ? (
+          {heatmapOverlay && showHeatmap ? (
+             <img src={`data:image/png;base64,${heatmapOverlay}`} alt="Heatmap Overlay" className="h-full w-full object-cover" />
+          ) : image ? (
             <img src={image} alt="Upload" className="h-full w-full object-cover opacity-60" />
           ) : (
             <div className="text-center">
@@ -68,6 +86,25 @@ const VisionAudit: React.FC<VisionAuditProps> = ({ onAuditComplete }) => {
             </div>
           )}
           <input type="file" id="vision-upload" hidden onChange={handleUpload} />
+          
+          {image && (
+             <div className="absolute top-2 right-2 flex gap-2" onClick={e => e.stopPropagation()}>
+                {heatmapOverlay && (
+                    <button 
+                      onClick={() => setShowHeatmap(!showHeatmap)}
+                      className="bg-black/80 hover:bg-black text-white text-xs px-2 py-1 rounded border border-white/20"
+                    >
+                      {showHeatmap ? 'Show Original' : 'Show Heatmap'}
+                    </button>
+                )}
+                <button 
+                  onClick={handleRemove}
+                  className="bg-red-600/80 hover:bg-red-600 text-white text-xs px-2 py-1 rounded border border-white/20"
+                >
+                  ✕
+                </button>
+             </div>
+          )}
         </div>
 
         <button 

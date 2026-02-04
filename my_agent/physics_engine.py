@@ -203,6 +203,70 @@ def generate_roi_chart(old_watts: float, new_watts: float, price: float, hours: 
     
     return base64.b64encode(buf.read()).decode('utf-8')
 
+def overlay_heatmap_on_image(image_bytes: bytes) -> str:
+    """
+    Overlays a light distribution heatmap on the provided image.
+    Returns: Base64 encoded PNG string.
+    """
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import io
+    import base64
+    from PIL import Image
+
+    print(f"[PHYSICS ENGINE]: Processing Vision Audit - Overlaying Heatmap...")
+
+    try:
+        # Load Image
+        img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        w, h = img.size
+        
+        # Create figure matching image aspect
+        dpi = 100
+        fig, ax = plt.subplots(figsize=(w/dpi, h/dpi), dpi=dpi)
+        
+        # Remove axes completely
+        ax.set_axis_off()
+        plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
+        plt.margins(0,0)
+        
+        # Draw background image
+        ax.imshow(img)
+        
+        # Generate Heatmap Logic (Simulated Spot Light in Center)
+        # Create a grid of coordinates
+        y_indices, x_indices = np.mgrid[0:h, 0:w]
+        
+        # Center of the image
+        cy, cx = h // 2, w // 2
+        
+        # Distance from center squared
+        dist_sq = (x_indices - cx)**2 + (y_indices - cy)**2
+        
+        # Standard deviation for the gaussian (spread of light)
+        sigma = min(w, h) / 3
+        
+        # Gaussian distribution
+        heatmap_data = np.exp(-dist_sq / (2 * sigma**2))
+        
+        # Overlay Heatmap with transparency
+        # cmap='plasma' (same as before), alpha=0.4
+        ax.imshow(heatmap_data, cmap='plasma', alpha=0.4, extent=[0, w, h, 0])
+        
+        # Save to buffer
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0, transparent=True)
+        plt.close(fig)
+        buf.seek(0)
+        
+        return base64.b64encode(buf.read()).decode('utf-8')
+
+    except Exception as e:
+        print(f"[PHYSICS ENGINE]: Error in overlay - {e}")
+        return ""
+
 def generate_optimization_report(room_area_sqm: float, target_lux: int, current_lumens: int) -> str:
     """
     Analyzes the gap between current lighting and required standards.

@@ -14,7 +14,8 @@ from my_agent.physics_engine import (
     calculate_roi_and_savings, 
     check_health_compliance,
     generate_light_distribution_heatmap,
-    generate_roi_chart
+    generate_roi_chart,
+    overlay_heatmap_on_image
 )
 
 app = FastAPI(title="Spatial Engine AI API")
@@ -81,6 +82,12 @@ async def api_spatial_audit(file: UploadFile = File(...)):
     Simulates a multimodal spatial audit.
     In a real implementation, this would call the Gemini vision model.
     """
+    # Read file for processing
+    contents = await file.read()
+    
+    # Generate Overlay
+    overlay_b64 = overlay_heatmap_on_image(contents)
+
     # Mock response mirroring the script.js logic for now
     return {
         "status": "success",
@@ -89,7 +96,8 @@ async def api_spatial_audit(file: UploadFile = File(...)):
         "vision_data": {
             "sectors": "3x3 Grid Analysis complete",
             "material": "Dark Oak / Paint",
-            "reference_object": "Door Frame"
+            "reference_object": "Door Frame",
+            "heatmap_overlay": overlay_b64
         }
     }
 
