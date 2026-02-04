@@ -52,6 +52,12 @@ const EconomicEngine: React.FC<EconomicEngineProps> = ({ baseUrl, onLog }) => {
             <ResultItem label="CO₂ Reduction" value={`${results.co2_reduction_kg} kg`} />
           </div>
         )}
+
+        {results?.roi_chart_image && (
+          <div className="mt-6 p-4 bg-black/40 rounded-lg border border-white/10 animate-fade-in">
+             <img src={`data:image/png;base64,${results.roi_chart_image}`} alt="ROI Payback Chart" className="w-full rounded" />
+          </div>
+        )}
       </div>
 
       <div className="glass-panel p-6">

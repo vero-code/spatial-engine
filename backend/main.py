@@ -13,7 +13,8 @@ from my_agent.physics_engine import (
     generate_optimization_report, 
     calculate_roi_and_savings, 
     check_health_compliance,
-    generate_light_distribution_heatmap
+    generate_light_distribution_heatmap,
+    generate_roi_chart
 )
 
 app = FastAPI(title="Spatial Engine AI API")
@@ -60,7 +61,13 @@ def api_roi_analysis(
         hours_per_day=hours,
         kwh_cost_usd=rate
     )
-    return json.loads(roi_json)
+    roi_data = json.loads(roi_json)
+    
+    # Generate Chart
+    chart = generate_roi_chart(old_watts, new_watts, price, hours, rate)
+    roi_data["roi_chart_image"] = chart
+    
+    return roi_data
 
 @app.post("/api/health-compliance")
 def api_health_check(lux: float, room_type: str = "office"):

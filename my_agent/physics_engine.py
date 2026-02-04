@@ -123,6 +123,86 @@ def generate_light_distribution_heatmap(lumens: float, distance_meters: float, b
     img_str = base64.b64encode(buf.read()).decode('utf-8')
     return img_str
 
+def generate_roi_chart(old_watts: float, new_watts: float, price: float, hours: float, rate: float) -> str:
+    """
+    Generates a cumulative cost comparison chart (ROI Payback).
+    Returns: Base64 encoded PNG string.
+    """
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import io
+    import base64
+    
+    print(f"[PHYSICS ENGINE]: Generating ROI Chart...")
+    
+    # Timeline: 3 years (36 months)
+    months = np.arange(0, 37, 1)
+    
+    # Monthly cost calculation
+    # Energy (kWh) per month = (Watts * Hours * 30) / 1000
+    kwh_month_old = (old_watts * hours * 30) / 1000
+    cost_month_old = kwh_month_old * rate
+    
+    kwh_month_new = (new_watts * hours * 30) / 1000
+    cost_month_new = kwh_month_new * rate
+    
+    # Cumulative Costs
+    # Old: Start at 0 (already own it), accum cost
+    cum_cost_old = months * cost_month_old
+    
+    # New: Start at Price (Initial Investment), accum cost
+    cum_cost_new = price + (months * cost_month_new)
+    
+    # Plotting
+    fig, ax = plt.subplots(figsize=(6, 4), facecolor='#0d1117')
+    ax.set_facecolor('#0d1117')
+    
+    ax.plot(months, cum_cost_old, color='#ff4d4d', linestyle='--', label='Current Bulbs (Inefficient)')
+    ax.plot(months, cum_cost_new, color='#00ff9d', linewidth=2, label='Upgrade (Efficient)')
+    
+    # Highlight Intersection (Payback Point)
+    # Find where New < Old
+    idx = np.argwhere(cum_cost_new < cum_cost_old)
+    if len(idx) > 0:
+        payback_month = months[idx[0][0]]
+        payback_cost = cum_cost_new[idx[0][0]]
+        ax.plot(payback_month, payback_cost, 'wo', markersize=8)
+        ax.annotate(f'Payback: {payback_month} mo', 
+                    xy=(payback_month, payback_cost), 
+                    xytext=(payback_month + 2, payback_cost - 10),
+                    color='white',
+                    arrowprops=dict(arrowstyle='->', color='white'))
+        
+        # Fill area between curves to show savings
+        ax.fill_between(months, cum_cost_old, cum_cost_new, where=(months >= payback_month), interpolate=True, color='#00ff9d', alpha=0.1)
+
+    # Styling
+    ax.set_title("Return on Investment (ROI) Timeline", color='white', pad=15)
+    ax.set_xlabel("Months", color='gray')
+    ax.set_ylabel("Cumulative Cost ($)", color='gray')
+    
+    ax.spines['bottom'].set_color('gray')
+    ax.spines['left'].set_color('gray')
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    
+    ax.tick_params(axis='x', colors='gray')
+    ax.tick_params(axis='y', colors='gray')
+    ax.grid(color='white', alpha=0.05, linestyle='--')
+    
+    legend = ax.legend(loc='upper left', facecolor='#0d1117', edgecolor='gray')
+    plt.setp(legend.get_texts(), color='gray')
+    
+    # Save
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', bbox_inches='tight', dpi=100)
+    plt.close(fig)
+    buf.seek(0)
+    
+    return base64.b64encode(buf.read()).decode('utf-8')
+
 def generate_optimization_report(room_area_sqm: float, target_lux: int, current_lumens: int) -> str:
     """
     Analyzes the gap between current lighting and required standards.
