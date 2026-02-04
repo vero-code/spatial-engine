@@ -116,6 +116,7 @@ function App() {
               onGenerateReport={handleGenerateOptimizationReport}
               currentArea={roomState.area}
               currentLumens={roomState.lumens}
+              lux={roomState.lux}
             />
           )}
           {activeSection === 'economics' && <EconomicEngine baseUrl={API_BASE_URL} onLog={addLog} />}
