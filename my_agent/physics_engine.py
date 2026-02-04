@@ -253,33 +253,21 @@ def overlay_heatmap_on_image(image_bytes: bytes) -> str:
         # --- 3. Engineering Grid Styling (The "Tech" Look) ---
         
         # Enable Grid
-        # alpha=0.3 makes it visible but not overwhelming
-        ax.grid(True, which='both', color='white', linestyle='-', linewidth=0.8, alpha=0.3)
+        # alpha=0.2 makes it barely visible (Clean Look)
+        ax.grid(True, which='both', color='white', linestyle='-', linewidth=0.5, alpha=0.2)
         
         # Configure Ticks (The Numbers)
-        ax.tick_params(axis='both', which='both', colors='white', labelsize=10, direction='in')
+        ax.tick_params(axis='both', which='both', colors='white', labelsize=6, direction='in')
         
         # Configure Spines (The Border Box)
         for spine in ax.spines.values():
             spine.set_edgecolor('white')
-            spine.set_linewidth(1)
+            spine.set_linewidth(0.5)
             spine.set_alpha(0.5) # Semi-transparent border
             
         # Optional: Add Label Units
-        ax.set_xlabel("X Coordinates (px)", color='white', fontsize=6, alpha=0.7)
-        ax.set_ylabel("Y Coordinates (px)", color='white', fontsize=6, alpha=0.7)
-        
-        # Add Engineering Legend (False Color Display Info)
-        tech_text = (
-            "AUDIT PARAMETERS\n"
-            "----------------\n"
-            "MODE: ISOLUX CONTOUR MAP\n"
-            "VIS: FALSE COLOR DISPLAY\n"
-            f"RES: {w}x{h} | DPI: {dpi}"
-        )
-        props = dict(boxstyle='square', facecolor='black', alpha=0.7, edgecolor='white', linewidth=0.5)
-        ax.text(0.02, 0.98, tech_text, transform=ax.transAxes, fontsize=6,
-                verticalalignment='top', color='#00ff9d', fontfamily='monospace', bbox=props)
+        ax.set_xlabel("X Coordinates (px)", color='white', fontsize=6, alpha=0.5)
+        ax.set_ylabel("Y Coordinates (px)", color='white', fontsize=6, alpha=0.5)
         
         # Ensure tight layout to remove extra whitespace around the plot
         plt.tight_layout(pad=0.5)
