@@ -1,13 +1,350 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spatial Engine AI | Senior Optical Physicist</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+    <meta name="description" content="DeepTech Autonomous Agent for Optical Physics & Energy Optimization">
+</head>
+<body class="dark-theme">
+    <div class="background-overlay"></div>
+    <div class="noise"></div>
+
+    <nav class="sidebar">
+        <div class="logo">
+            <span class="logo-icon">💡</span>
+            <span class="logo-text">Spatial<span>Engine</span></span>
+        </div>
+        <ul class="nav-links">
+            <li class="active" data-section="dashboard">
+                <span class="icon">📊</span>
+                <span class="text">Dashboard</span>
+            </li>
+            <li data-section="physics">
+                <span class="icon">⚛️</span>
+                <span class="text">Physics Core</span>
+            </li>
+            <li data-section="economics">
+                <span class="icon">💰</span>
+                <span class="text">Economic Engine</span>
+            </li>
+            <li data-section="market">
+                <span class="icon">🛒</span>
+                <span class="text">Market Hub</span>
+            </li>
+            <li data-section="vision">
+                <span class="icon">👁️</span>
+                <span class="text">Vision Audit</span>
+            </li>
+            <li data-section="standards">
+                <span class="icon">📘</span>
+                <span class="text">Standards KB</span>
+            </li>
+            <li data-section="config">
+                <span class="icon">⚙️</span>
+                <span class="text">Config Gen</span>
+            </li>
+        </ul>
+        <div class="sidebar-footer">
+            <div class="status-indicator">
+                <span class="status-dot"></span>
+                <span class="status-text">Core Active</span>
+            </div>
+            <p class="version">v1.0.4 - Gemini 3 Pro</p>
+        </div>
+    </nav>
+
+    <main class="content-area">
+        <header class="main-header">
+            <div class="header-info">
+                <h1>Optical Engineer Console</h1>
+                <p class="subtitle">Autonomous Physics Analysis & Energy Simulation</p>
+            </div>
+            <div class="header-actions">
+                <button id="export-report-btn" class="btn btn-secondary">Export Report</button>
+            </div>
+        </header>
+
+        <!-- DASHBOARD SECTION -->
+        <section id="dashboard" class="ui-section active">
+            <div class="grid-container">
+                <div class="card glass-card span-2">
+                    <div class="card-header">
+                        <h3>Room State Summary</h3>
+                        <span class="card-tag">LATEST_SCAN</span>
+                    </div>
+                    <div class="state-metrics">
+                        <div class="metric">
+                            <span class="label">Total Area</span>
+                            <span class="value" id="state-area">-- m²</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Wall Albedo</span>
+                            <span class="value" id="state-reflection">--</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Total Lumens</span>
+                            <span class="value" id="state-lumens">-- lm</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Avg. Lux</span>
+                            <span class="valueHighlight" id="state-lux">-- lux</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card glass-card">
+                    <div class="card-header">
+                        <h3>Compliance Status</h3>
+                    </div>
+                    <div class="compliance-box" id="compliance-status">
+                        <div class="status-unknown">Waiting for data...</div>
+                    </div>
+                </div>
+
+                <div class="card glass-card span-3">
+                    <div class="card-header">
+                        <h3>Physics Reasoning Log</h3>
+                    </div>
+                    <div class="terminal-log" id="main-log">
+                        <p class="log-entry system">[SYSTEM] Spatial Engine initialised...</p>
+                        <p class="log-entry system">[SYSTEM] Multimodal Vision Ready (Gemini 3.0)</p>
+                        <p class="log-entry system">[SYSTEM] Deterministic Engine Online.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PHYSICS SECTION -->
+        <section id="physics" class="ui-section">
+            <div class="grid-container">
+                <div class="card glass-card">
+                    <div class="card-header">
+                        <h3>Lux Calculator (Inverse Square)</h3>
+                    </div>
+                    <form id="lux-calc-form" class="ui-form">
+                        <div class="form-group">
+                            <label>Light Lumens (lm)</label>
+                            <input type="number" id="lux-lumens" placeholder="800" value="800">
+                        </div>
+                        <div class="form-group">
+                            <label>Distance (meters)</label>
+                            <input type="number" step="0.1" id="lux-dist" placeholder="2.5" value="2.5">
+                        </div>
+                        <div class="form-group">
+                            <label>Beam Angle (°)</label>
+                            <input type="number" id="lux-angle" placeholder="120" value="120">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Calculate Lux</button>
+                    </form>
+                    <div class="result-area" id="lux-result">
+                        <span class="result-value">-- lux</span>
+                    </div>
+                </div>
+
+                <div class="card glass-card span-2">
+                    <div class="card-header">
+                        <h3>Optimization Engine</h3>
+                    </div>
+                    <form id="opti-form" class="ui-form grid-form">
+                        <div class="form-group">
+                            <label>Room Area (m²)</label>
+                            <input type="number" id="opti-area" value="20">
+                        </div>
+                        <div class="form-group">
+                            <label>Target Standard</label>
+                            <select id="opti-target">
+                                <option value="500">Office (500 Lux)</option>
+                                <option value="300">Kitchen (300 Lux)</option>
+                                <option value="150" selected>Living Room (150 Lux)</option>
+                                <option value="100">Corridor (100 Lux)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Current Lumens (lm)</label>
+                            <input type="number" id="opti-current" value="800">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Generate Report</button>
+                    </form>
+                    <div class="report-box" id="opti-report">
+                        <p class="placeholder-text">Enter parameters to see optimization strategy.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ECONOMICS SECTION -->
+        <section id="economics" class="ui-section">
+            <div class="grid-container">
+                <div class="card glass-card span-2">
+                    <div class="card-header">
+                        <h3>Energy ROI & CO₂ Reducer</h3>
+                    </div>
+                    <form id="roi-form" class="ui-form grid-form">
+                        <div class="form-group">
+                            <label>Current Wattage (W)</label>
+                            <input type="number" id="roi-old" value="60">
+                        </div>
+                        <div class="form-group">
+                            <label>New Energy-Efficient (W)</label>
+                            <input type="number" id="roi-new" value="9">
+                        </div>
+                        <div class="form-group">
+                            <label>Unit Price (USD)</label>
+                            <input type="number" step="0.01" id="roi-price" value="5.99">
+                        </div>
+                        <div class="form-group">
+                            <label>Daily Usage (Hrs)</label>
+                            <input type="number" id="roi-hours" value="5">
+                        </div>
+                        <div class="form-group">
+                            <label>Rate ($/kWh)</label>
+                            <input type="number" step="0.01" id="roi-rate" value="0.17">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Analyze Savings</button>
+                    </form>
+                    <div class="savings-display" id="roi-results">
+                        <div class="saving-item">
+                            <span class="s-label">Annual Savings</span>
+                            <span class="s-value" id="res-savings">--</span>
+                        </div>
+                        <div class="saving-item">
+                            <span class="s-label">Payback Period</span>
+                            <span class="s-value" id="res-payback">--</span>
+                        </div>
+                        <div class="saving-item">
+                            <span class="s-label">CO₂ Reduction</span>
+                            <span class="s-value" id="res-co2">--</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card glass-card">
+                    <div class="card-header">
+                        <h3>Rate Lookup</h3>
+                    </div>
+                    <div class="search-box">
+                        <input type="text" id="rate-query" placeholder="Enter City/Region...">
+                        <button id="rate-search-btn" class="btn btn-small">Fetch Rate</button>
+                    </div>
+                    <div class="search-results" id="rate-results">
+                        <p class="info-text">Market agent fetches real-time data from local utilities.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MARKET SECTION -->
+        <section id="market" class="ui-section">
+            <div class="card glass-card">
+                <div class="card-header">
+                    <h3>Market Intelligence & Verification</h3>
+                </div>
+                <div class="market-search">
+                    <input type="text" id="market-query" placeholder="Search products e.g. 'Philips Hue 1600lm LED'...">
+                    <button id="market-search-btn" class="btn btn-primary">Run Multi-threaded Search</button>
+                </div>
+                <div class="market-display" id="market-results">
+                    <div class="empty-market">
+                        <span class="big-icon">🛒</span>
+                        <p>Search for real lighting products. Agent validates technical specs (CRI, Dimmable, Protocol).</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VISION SECTION -->
+        <section id="vision" class="ui-section">
+            <div class="grid-container">
+                <div class="card glass-card span-2">
+                    <div class="card-header">
+                        <h3>Multimodal Vision Audit</h3>
+                    </div>
+                    <div class="upload-area" id="drop-zone">
+                        <input type="file" id="file-input" hidden>
+                        <div class="upload-prompt">
+                            <span class="big-icon">📸</span>
+                            <p>Drag room photo here or <span>browse</span></p>
+                            <small>Supported: JPG, PNG (Max 10MB)</small>
+                        </div>
+                        <div class="preview-container hidden">
+                            <img src="" id="upload-preview" alt="Preview">
+                        </div>
+                    </div>
+                    <button id="run-audit-btn" class="btn btn-primary" disabled>Run Spatial Audit</button>
+                </div>
+                <div class="card glass-card">
+                    <div class="card-header">
+                        <h3>Vision Extraction</h3>
+                    </div>
+                    <div class="vision-checklist" id="vision-results">
+                        <div class="check-item disabled">
+                            <span class="status">⭕</span> 3x3 Grid Analysis
+                        </div>
+                        <div class="check-item disabled">
+                            <span class="status">⭕</span> Material Identification
+                        </div>
+                        <div class="check-item disabled">
+                            <span class="status">⭕</span> Shadow Mapping
+                        </div>
+                        <div class="check-item disabled">
+                            <span class="status">⭕</span> Reference Object Inference
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- STANDARDS SECTION -->
+        <section id="standards" class="ui-section">
+            <div class="card glass-card">
+                <div class="card-header">
+                    <h3>Expert Knowledge Base (RAG)</h3>
+                </div>
+                <div class="kb-interface">
+                    <div class="kb-topics">
+                        <button class="topic-btn">Zigbee Protocol</button>
+                        <button class="topic-btn">Matter Standard</button>
+                        <button class="topic-btn">Health (ISO 8995)</button>
+                        <button class="topic-btn">Philips Hue Hubs</button>
+                    </div>
+                    <div class="kb-content" id="kb-display">
+                        <p>Consult the standards knowledge base to ensure hardware compatibility and regulatory compliance.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CONFIG SECTION -->
+        <section id="config" class="ui-section">
+            <div class="card glass-card">
+                <div class="card-header">
+                    <h3>Smart Scene Config Generator</h3>
+                </div>
+                <div class="config-actions">
+                    <div class="form-group row">
+                        <label>Hub Type:</label>
+                        <select id="hub-type">
+                            <option value="ha">Home Assistant (YAML)</option>
+                            <option value="hk" selected>HomeKit (JSON)</option>
+                            <option value="matter">Matter Universal</option>
+                        </select>
+                    </div>
+                    <button id="gen-config-btn" class="btn btn-primary">Generate Scenes</button>
+                </div>
+                <div class="code-editor-box">
+                    <pre><code id="config-output">{ "status": "Ready to generate" }</code></pre>
+                </div>
+                <button id="download-config" class="btn btn-secondary btn-small">Download config.json</button>
+            </div>
+        </section>
+    </main>
+
+    <div class="notification-toast" id="toast"></div>
+
+    <script src="script.js"></script>
+</body>
 </html>
