@@ -12,7 +12,8 @@ from my_agent.physics_engine import (
     calculate_lux_at_point, 
     generate_optimization_report, 
     calculate_roi_and_savings, 
-    check_health_compliance
+    check_health_compliance,
+    generate_light_distribution_heatmap
 )
 
 app = FastAPI(title="Spatial Engine AI API")
@@ -34,7 +35,8 @@ def read_root():
 def api_calculate_lux(lumens: float, distance: float, angle: float = 120.0):
     """Calculates Lux using the Physics Engine."""
     result = calculate_lux_at_point(lumens, distance, angle)
-    return {"lux": float(result)}
+    heatmap = generate_light_distribution_heatmap(lumens, distance, angle)
+    return {"lux": float(result), "heatmap_image": heatmap}
 
 @app.post("/api/optimization-report")
 def api_optimization_report(area: float, target_lux: int, current_lumens: int):

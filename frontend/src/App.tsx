@@ -15,7 +15,8 @@ function App() {
     area: 0,
     reflection: 0.8,
     lumens: 0,
-    lux: 0
+    lux: 0,
+    heatmapImage: ''
   });
   const [logs, setLogs] = useState<any[]>([
     { id: '1', msg: 'Spatial Engine initialized...', type: 'system', time: '15:10:01' },
@@ -41,7 +42,7 @@ function App() {
         method: 'POST'
       });
       const data = await response.json();
-      setRoomState(prev => ({ ...prev, lux: data.lux, lumens }));
+      setRoomState(prev => ({ ...prev, lux: data.lux, lumens, heatmapImage: data.heatmap_image }));
       addLog(`Point Calculation Received: ${data.lux} lux at target.`, 'success');
     } catch (err) {
       addLog(`Lux Calculation Failed`, 'warn');
@@ -117,6 +118,7 @@ function App() {
               currentArea={roomState.area}
               currentLumens={roomState.lumens}
               lux={roomState.lux}
+              heatmapImage={roomState.heatmapImage}
             />
           )}
           {activeSection === 'economics' && <EconomicEngine baseUrl={API_BASE_URL} onLog={addLog} />}

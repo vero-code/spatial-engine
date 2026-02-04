@@ -6,6 +6,7 @@ interface PhysicsEngineProps {
   currentArea: number;
   currentLumens: number;
   lux: number;
+  heatmapImage?: string;
 }
 
 const PhysicsEngine: React.FC<PhysicsEngineProps> = ({ 
@@ -13,7 +14,8 @@ const PhysicsEngine: React.FC<PhysicsEngineProps> = ({
   onGenerateReport, 
   currentArea, 
   currentLumens,
-  lux
+  lux,
+  heatmapImage
 }) => {
   const [luxInputs, setLuxInputs] = useState({ lumens: 800, dist: 2.5, angle: 120 });
   const [optiInputs, setOptiInputs] = useState({ 
@@ -51,6 +53,13 @@ const PhysicsEngine: React.FC<PhysicsEngineProps> = ({
             <div className="mt-6 p-4 bg-black/40 rounded-lg border-l-4 border-accent-secondary animate-fade-in">
               <p className="text-xs text-gray-400 uppercase font-bold mb-1">Calculated Illuminance</p>
               <p className="text-3xl font-mono text-white">{lux.toFixed(2)} <span className="text-sm text-gray-500">lux</span></p>
+              
+              {heatmapImage && (
+                <div className="mt-4 pt-4 border-t border-white/10">
+                  <p className="text-xs text-gray-400 uppercase font-bold mb-2">Photon Distribution Map</p>
+                  <img src={`data:image/png;base64,${heatmapImage}`} alt="Light Distribution Heatmap" className="w-full rounded border border-white/10" />
+                </div>
+              )}
             </div>
           )}
         </form>

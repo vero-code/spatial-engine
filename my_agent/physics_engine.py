@@ -31,6 +31,98 @@ def calculate_lux_at_point(light_lumens: float, distance_meters: float, beam_ang
     print(f"[PHYSICS ENGINE]: Result = {result} lux")
     return str(result)
 
+def generate_light_distribution_heatmap(lumens: float, distance_meters: float, beam_angle_degrees: float) -> str:
+    """
+    Generates a visual heatmap of the light distribution on the floor.
+    Returns: Base64 encoded PNG string.
+    """
+    import matplotlib
+    matplotlib.use('Agg') # Non-interactive backend
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import io
+    import base64
+
+    print(f"[PHYSICS ENGINE]: Generating Heatmap for {lumens}lm...")
+
+    # Grid setup (Floor area 6x6 meters)
+    x = np.linspace(-3, 3, 100)
+    y = np.linspace(-3, 3, 100)
+    X, Y = np.meshgrid(x, y)
+    
+    # Calculate distance from center (0,0) on the floor
+    # We assume the light is at (0,0, distance_meters)
+    # Distance from light point to grid point (x,y,0)
+    # d = sqrt(x^2 + y^2 + h^2)
+    # But for lux simply: E = I / d^2 * cos(theta)
+    # approximate spot logic:
+    
+    R_floor = np.sqrt(X**2 + Y**2) # Distance from center on floor
+    D_light = np.sqrt(R_floor**2 + distance_meters**2) # Slant range
+    
+    # Cosine of angle of incidence (theta)
+    # cos(theta) = adjacent / hypotenuse = distance_meters / D_light
+    cos_theta = distance_meters / D_light
+    
+    # Beam angle cutoff
+    # If angle of point > beam_angle/2, intensity drops (simplified)
+    # angle_of_point = arccos(cos_theta)
+    angle_of_point_rad = np.arccos(cos_theta)
+    beam_cutoff_rad = np.radians(beam_angle_degrees / 2)
+    
+    # Intensity (Candela) distribution (Simplified Lambertian-ish within beam)
+    # I = I0 * cos(angle_of_point) ?? Generic approximation
+    # Let's assume uniform intensity I within beam for simplicity, or slightly peaked.
+    # Solid Angle = 2pi(1 - cos(beam/2))
+    solid_angle = 2 * np.pi * (1 - np.cos(beam_cutoff_rad))
+    I_avg = lumens / solid_angle
+    
+    # Simple falloff model: E = (I / D^2) * cos(theta)
+    # Only if angle_of_point < beam_cutoff
+    
+    Illuminance = (I_avg / (D_light**2)) * cos_theta
+    
+    # Apply cutoff
+    start_fade = beam_cutoff_rad * 0.8
+    # Soft mask
+    mask = np.clip((beam_cutoff_rad - angle_of_point_rad) / (beam_cutoff_rad - start_fade), 0, 1)
+    Illuminance = Illuminance * mask
+
+    # Plotting
+    fig, ax = plt.subplots(figsize=(6, 5), facecolor='black')
+    ax.set_facecolor('black')
+    
+    # Countourf
+    levels = np.linspace(0, np.max(Illuminance), 20)
+    if np.max(Illuminance) == 0: levels = 10 # avoid error
+    
+    contour = ax.contourf(X, Y, Illuminance, levels=levels, cmap='plasma')
+    
+    # Styling
+    ax.set_title(f"Light Distribution ({int(lumens)} lm @ {distance_meters}m)", color='white', pad=20)
+    ax.set_xlabel("Meters (X)", color='gray')
+    ax.set_ylabel("Meters (Y)", color='gray')
+    ax.spines['bottom'].set_color('gray')
+    ax.spines['left'].set_color('gray')
+    ax.tick_params(axis='x', colors='gray')
+    ax.tick_params(axis='y', colors='gray')
+    ax.grid(color='white', alpha=0.1, linestyle='--')
+    
+    # Colorbar
+    cbar = plt.colorbar(contour)
+    cbar.set_label('Illuminance (Lux)', color='white')
+    cbar.ax.yaxis.set_tick_params(color='white')
+    plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='white')
+
+    # Save to buffer
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', bbox_inches='tight', dpi=100)
+    plt.close(fig)
+    buf.seek(0)
+    
+    img_str = base64.b64encode(buf.read()).decode('utf-8')
+    return img_str
+
 def generate_optimization_report(room_area_sqm: float, target_lux: int, current_lumens: int) -> str:
     """
     Analyzes the gap between current lighting and required standards.
