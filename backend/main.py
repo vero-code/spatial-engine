@@ -93,7 +93,12 @@ async def api_spatial_audit(file: UploadFile = File(...)):
     contents = await file.read()
     
     # Generate Overlay
-    overlay_b64 = overlay_heatmap_on_image(contents)
+    # Mocking Agent Decision: Placing lamps at logical points
+    # For now, let's place one central lamp and perhaps one near a corner to show off.
+    # Using relative coordinates (0.0 to 1.0)
+    mock_lamp_decisions = [(0.5, 0.5), (0.2, 0.3)]
+    
+    overlay_b64 = overlay_heatmap_on_image(contents, lamp_positions=mock_lamp_decisions)
 
     # Mock response mirroring the script.js logic for now
     return {

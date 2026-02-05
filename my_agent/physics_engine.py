@@ -263,7 +263,7 @@ def generate_consumption_chart(old_watts: float, new_watts: float, hours_per_day
     
     return base64.b64encode(buf.read()).decode('utf-8')
 
-def overlay_heatmap_on_image(image_bytes: bytes) -> str:
+def overlay_heatmap_on_image(image_bytes: bytes, lamp_positions: list = None) -> str:
     """
     Overlays a light distribution heatmap AND a technical measurement grid.
     Matches the style of a CAD/Engineering interface.
@@ -309,6 +309,34 @@ def overlay_heatmap_on_image(image_bytes: bytes) -> str:
         CS = ax.contour(heatmap_data, levels=levels, extent=[0, w, h, 0], 
                    colors='white', alpha=0.3, linewidths=0.5)
         ax.clabel(CS, inline=True, fontsize=6, fmt='%.1f', colors='white')
+        
+        # --- 2.1 Draw "Decided" Lamp Positions ---
+        if lamp_positions:
+            # lamp_positions is expected to be a list of (x, y) tuples
+            # If values are <= 1.0, treat as relative coordinates.
+            # If > 1.0, treat as pixel coordinates.
+            
+            lx_coords = []
+            ly_coords = []
+            
+            for (lx, ly) in lamp_positions:
+                if lx <= 1.0 and ly <= 1.0:
+                    lx_coords.append(lx * w)
+                    ly_coords.append(ly * h)
+                else:
+                    lx_coords.append(lx)
+                    ly_coords.append(ly)
+            
+            # Draw markers
+            # 'x' marker, yellow color, with a slight glow effect (halo)
+            # Halo
+            ax.scatter(lx_coords, ly_coords, s=150, c='black', marker='x', linewidths=3, alpha=0.5)
+            # Core
+            ax.scatter(lx_coords, ly_coords, s=100, c='#FFD700', marker='x', linewidths=2, label='Proposed Lamp')
+            
+            # Add labels
+            for i, (lx, ly) in enumerate(zip(lx_coords, ly_coords)):
+                ax.text(lx + 15, ly - 15, f"LAMP {i+1}", color='#FFD700', fontsize=8, fontweight='bold')
         
         # --- 3. Engineering Grid Styling (The "Tech" Look) ---
         
