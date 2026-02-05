@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import LiveAudioSession from './LiveAudioSession';
 
 const LiveConsole: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'audio' | 'video'>('audio');
@@ -39,15 +40,9 @@ const LiveConsole: React.FC = () => {
                 </div>
             </div>
             
-            <div className="flex-grow flex items-center justify-center border-2 border-dashed border-white/5 rounded-xl bg-white/5 relative overflow-hidden group">
+            <div className="flex-grow flex items-center justify-center border-2 border-dashed border-white/5 rounded-xl bg-white/5 relative overflow-hidden group p-4">
                 {activeTab === 'audio' ? (
-                    <div className="text-center">
-                        <div className="w-24 h-24 rounded-full bg-accent-primary/10 mx-auto mb-4 flex items-center justify-center border border-accent-primary/20 group-hover:border-accent-primary/40 transition-colors">
-                            <span className="text-4xl">🎤</span>
-                        </div>
-                        <p className="text-gray-400 font-medium">Audio Stream Ready</p>
-                        <p className="text-gray-600 text-sm mt-2">Waiting for connection...</p>
-                    </div>
+                    <LiveAudioSession />
                 ) : (
                     <div className="text-center">
                          <div className="w-24 h-24 rounded-full bg-accent-secondary/10 mx-auto mb-4 flex items-center justify-center border border-accent-secondary/20 group-hover:border-accent-secondary/40 transition-colors">
