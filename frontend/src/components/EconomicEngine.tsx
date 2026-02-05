@@ -3,9 +3,10 @@ import React, { useState } from 'react';
 interface EconomicEngineProps {
   baseUrl: string;
   onLog: (msg: string, type?: string) => void;
+  onAnalysisComplete?: (data: any) => void;
 }
 
-const EconomicEngine: React.FC<EconomicEngineProps> = ({ baseUrl, onLog }) => {
+const EconomicEngine: React.FC<EconomicEngineProps> = ({ baseUrl, onLog, onAnalysisComplete }) => {
   const [inputs, setInputs] = useState({ oldW: 60, newW: 9, price: 5.99, hours: 5, rate: 0.17 });
   const [results, setResults] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -19,6 +20,7 @@ const EconomicEngine: React.FC<EconomicEngineProps> = ({ baseUrl, onLog }) => {
       });
       const data = await response.json();
       setResults(data);
+      if (onAnalysisComplete) onAnalysisComplete(data);
       onLog(`ROI Analysis complete. Annual savings: $${data.annual_savings_usd}.`, 'success');
     } catch (err) {
       onLog(`ROI Analysis failed. check backend connection.`, 'warn');

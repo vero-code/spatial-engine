@@ -101,6 +101,15 @@ async def api_spatial_audit(file: UploadFile = File(...)):
         }
     }
 
+from backend.report_generator import ReportRequest, generate_html_report
+from fastapi.responses import HTMLResponse
+
+@app.post("/api/export-report")
+def api_export_report(request: ReportRequest):
+    """Generates a downloadable HTML Engineering Report."""
+    html_content = generate_html_report(request)
+    return HTMLResponse(content=html_content, status_code=200)
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
