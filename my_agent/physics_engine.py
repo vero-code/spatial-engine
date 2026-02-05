@@ -379,49 +379,54 @@ def calculate_roi_and_savings(
     new_watts: float,
     new_bulb_price: float = 0.0,
     hours_per_day: float = 5.0,
-    kwh_cost_usd: float = 0.17
+    kwh_cost_usd: float = 0.17,
+    count: int = 1
 ) -> str:
     """
-    Calculates energy savings and ROI for switching to efficient lighting.
-    Now includes Payback Period.
+    Calculates energy savings and ROI for switching to efficient lighting for multiple bulbs.
+    Now includes Payback Period and count support.
 
     Args:
         old_watts: Wattage of the current bulb (e.g., 60W incandescent).
         new_watts: Wattage of the replacement bulb (e.g., 9W LED).
+        new_bulb_price: Price of ONE replacement bulb.
         hours_per_day: Average usage hours.
-        kwh_cost_usd: Cost of electricity per kWh (default $0.15).
+        kwh_cost_usd: Cost of electricity per kWh (default $0.17).
+        count: Number of bulbs to replace.
         
     Returns:
         JSON string with annual savings and ROI analysis.
     """
-    print(f"\n[PHYSICS ENGINE]: Calculating ROI (Old: {old_watts}W vs New: {new_watts}W)...")
+    print(f"\n[PHYSICS ENGINE]: Calculating ROI (Old: {old_watts}W vs New: {new_watts}W, Count: {count})...")
     
-    # Calculate the difference in consumption (kW)
-    watts_saved = old_watts - new_watts
-    kwh_saved_daily = (watts_saved * hours_per_day) / 1000
-    kwh_saved_annual = kwh_saved_daily * 365
+    # Calculate the difference in consumption (kW) for ONE bulb
+    watts_saved_per_bulb = old_watts - new_watts
+    kwh_saved_daily_per_bulb = (watts_saved_per_bulb * hours_per_day) / 1000
+    kwh_saved_annual_total = kwh_saved_daily_per_bulb * 365 * count
     
     # Calculate the money
-    money_saved_annual = kwh_saved_annual * kwh_cost_usd
-    money_saved_daily = money_saved_annual / 365
+    money_saved_annual_total = kwh_saved_annual_total * kwh_cost_usd
+    total_investment = new_bulb_price * count
 
-    co2_saved_kg = kwh_saved_annual * 0.385  # Average emission coefficient
+    co2_saved_kg_total = kwh_saved_annual_total * 0.385  # Average emission coefficient
     
-    # Payback Period
+    # Payback Period (remains same if both cost and savings scale linearly)
     payback_months = 0.0
-    if new_bulb_price > 0 and money_saved_annual > 0:
-        years_to_payback = new_bulb_price / money_saved_annual
+    if total_investment > 0 and money_saved_annual_total > 0:
+        years_to_payback = total_investment / money_saved_annual_total
         payback_months = round(years_to_payback * 12, 1)
 
     data = {
-        "annual_savings_usd": round(money_saved_annual, 2),
+        "annual_savings_usd": round(money_saved_annual_total, 2),
         "payback_period_months": payback_months,
-        "kwh_saved_year": round(kwh_saved_annual, 1),
-        "co2_reduction_kg": round(co2_saved_kg, 1),
-        "message": f"Switching saves ${round(money_saved_annual, 2)} per year and reduces CO2 by {round(co2_saved_kg, 1)}kg."
+        "kwh_saved_year": round(kwh_saved_annual_total, 1),
+        "co2_reduction_kg": round(co2_saved_kg_total, 1),
+        "lamp_count": count,
+        "total_investment": round(total_investment, 2),
+        "message": f"Replacing {count} bulbs saves ${round(money_saved_annual_total, 2)} per year and reduces CO2 by {round(co2_saved_kg_total, 1)}kg."
     }
     
-    print(f"[PHYSICS ENGINE]: ROI Calculated. Payback: {payback_months} months.")
+    print(f"[PHYSICS ENGINE]: ROI Calculated for {count} bulbs. Payback: {payback_months} months.")
     return json.dumps(data)
 
 def check_health_compliance(lux_level: float, room_type: str = "office") -> str:

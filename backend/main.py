@@ -53,7 +53,8 @@ def api_roi_analysis(
     new_watts: float, 
     price: float, 
     hours: float, 
-    rate: float
+    rate: float,
+    count: int = 1
 ):
     """Calculates ROI and energy savings."""
     roi_json = calculate_roi_and_savings(
@@ -61,7 +62,8 @@ def api_roi_analysis(
         new_watts=new_watts,
         new_bulb_price=price,
         hours_per_day=hours,
-        kwh_cost_usd=rate
+        kwh_cost_usd=rate,
+        count=count
     )
     roi_data = json.loads(roi_json)
     
