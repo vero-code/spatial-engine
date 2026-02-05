@@ -138,6 +138,57 @@ function App() {
     }
   };
 
+  const handleExportPDF = async () => {
+    addLog("Building PDF Report...", 'system');
+    
+    // Check if we have data to export
+    if (!roomState.area && !roiData) {
+        addLog("No audit data available to export.", 'warn');
+        return;
+    }
+
+    const reportRequest = {
+      project_name: "Spatial Engine Audit",
+      timestamp: new Date().toLocaleString(),
+      area_sqm: roomState.area || 0,
+      lux_level: roomState.lux || 0,
+      target_lux: 500,
+      energy_savings_annual: roiData?.annual_savings_usd || 0,
+      co2_reduction: roiData?.co2_reduction_kg || 0,
+      payback_months: roiData?.payback_period_months || 0,
+      heatmap_image: null, 
+      physics_heatmap_image: roomState.physicsHeatmap,
+      vision_heatmap_image: roomState.visionHeatmap,
+      roi_chart_image: roiData?.roi_chart_image,
+      consumption_chart_image: roiData?.consumption_chart_image
+    };
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/export-pdf`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reportRequest)
+      });
+      
+      if (!response.ok) throw new Error("PDF Generation Failed");
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Engineering_Report_${Date.now()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      addLog("PDF Report Downloaded Successfully", 'success');
+    } catch (error) {
+      addLog("Failed to export PDF", 'warn');
+      console.error(error);
+    }
+  };
+
   return (
     <div className="flex bg-bg-dark min-h-screen text-[#c9d1d9] font-sans antialiased">
       <div className="bg-overlay"></div>
@@ -155,9 +206,15 @@ function App() {
           </div>
           <button 
             onClick={handleExportReport}
-            className="btn-premium bg-white/5 border border-border-muted text-gray-300 hover:bg-white/10 transition-colors"
+            className="btn-premium bg-white/5 border border-border-muted text-gray-300 hover:bg-white/10 transition-colors mr-3"
           >
-            Export Engineering Report
+            Export HTML Report
+          </button>
+          <button 
+            onClick={handleExportPDF}
+            className="btn-premium bg-accent-primary text-white hover:bg-accent-secondary transition-colors"
+          >
+            Export PDF
           </button>
         </header>
 

@@ -109,13 +109,24 @@ async def api_spatial_audit(file: UploadFile = File(...)):
     }
 
 from backend.report_generator import ReportRequest, generate_html_report
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
+from backend.pdf_generator import generate_pdf_report
 
 @app.post("/api/export-report")
 def api_export_report(request: ReportRequest):
     """Generates a downloadable HTML Engineering Report."""
     html_content = generate_html_report(request)
     return HTMLResponse(content=html_content, status_code=200)
+
+@app.post("/api/export-pdf")
+def api_export_pdf(request: ReportRequest):
+    """Generates a downloadable PDF Engineering Report."""
+    pdf_bytes = generate_pdf_report(request)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=Engineering_Report.pdf"}
+    )
 
 if __name__ == "__main__":
     import uvicorn
