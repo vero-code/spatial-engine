@@ -203,6 +203,66 @@ def generate_roi_chart(old_watts: float, new_watts: float, price: float, hours: 
     
     return base64.b64encode(buf.read()).decode('utf-8')
 
+def generate_consumption_chart(old_watts: float, new_watts: float, hours_per_day: float = 5.0) -> str:
+    """
+    Generates a bar chart comparing annual energy consumption (kWh).
+    Returns: Base64 encoded PNG string.
+    """
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import io
+    import base64
+
+    print(f"[PHYSICS ENGINE]: Generating Consumption Chart...")
+
+    # Calculate Annual kWh
+    kwh_old = (old_watts * hours_per_day * 365) / 1000
+    kwh_new = (new_watts * hours_per_day * 365) / 1000
+    
+    # Data
+    labels = ['Before (Legacy)', 'After (Upgrade)']
+    values = [kwh_old, kwh_new]
+    colors = ['#ff4d4d', '#00ff9d'] # Red for bad, Green for good
+
+    # Plotting
+    fig, ax = plt.subplots(figsize=(5, 4), facecolor='#0d1117')
+    ax.set_facecolor('#0d1117')
+    
+    # Create Bars
+    bars = ax.bar(labels, values, color=colors, width=0.5)
+    
+    # Add values on top of bars
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2., height + (max(values)*0.02),
+                f'{int(height)} kWh',
+                ha='center', va='bottom', color='white', fontweight='bold')
+
+    # Styling
+    ax.set_title("Annual Energy Consumption", color='white', pad=15)
+    ax.set_ylabel("Energy (kWh / Year)", color='gray')
+    
+    ax.spines['bottom'].set_color('gray')
+    ax.spines['left'].set_color('gray')
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    
+    ax.tick_params(axis='x', colors='white')
+    ax.tick_params(axis='y', colors='gray')
+    
+    # Y limit padding
+    ax.set_ylim(0, max(values) * 1.2)
+    
+    # Save
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', bbox_inches='tight', dpi=100)
+    plt.close(fig)
+    buf.seek(0)
+    
+    return base64.b64encode(buf.read()).decode('utf-8')
+
 def overlay_heatmap_on_image(image_bytes: bytes) -> str:
     """
     Overlays a light distribution heatmap AND a technical measurement grid.

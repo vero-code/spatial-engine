@@ -15,6 +15,7 @@ from my_agent.physics_engine import (
     check_health_compliance,
     generate_light_distribution_heatmap,
     generate_roi_chart,
+    generate_consumption_chart,
     overlay_heatmap_on_image
 )
 
@@ -67,6 +68,10 @@ def api_roi_analysis(
     # Generate Chart
     chart = generate_roi_chart(old_watts, new_watts, price, hours, rate)
     roi_data["roi_chart_image"] = chart
+    
+    # Generate Consumption Chart
+    consumption_chart = generate_consumption_chart(old_watts, new_watts, hours)
+    roi_data["consumption_chart_image"] = consumption_chart
     
     return roi_data
 

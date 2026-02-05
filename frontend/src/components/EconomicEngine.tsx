@@ -56,8 +56,15 @@ const EconomicEngine: React.FC<EconomicEngineProps> = ({ baseUrl, onLog, onAnaly
         )}
 
         {results?.roi_chart_image && (
-          <div className="mt-6 p-4 bg-black/40 rounded-lg border border-white/10 animate-fade-in">
-             <img src={`data:image/png;base64,${results.roi_chart_image}`} alt="ROI Payback Chart" className="w-full rounded" />
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div className="p-4 bg-black/40 rounded-lg border border-white/10 animate-fade-in">
+               <img src={`data:image/png;base64,${results.roi_chart_image}`} alt="ROI Payback Chart" className="w-full rounded" />
+             </div>
+             {results?.consumption_chart_image && (
+               <div className="p-4 bg-black/40 rounded-lg border border-white/10 animate-fade-in">
+                 <img src={`data:image/png;base64,${results.consumption_chart_image}`} alt="Consumption Chart" className="w-full rounded" />
+               </div>
+             )}
           </div>
         )}
       </div>

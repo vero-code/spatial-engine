@@ -17,7 +17,8 @@ def test_export_report():
         "payback_months": 8.5,
         "physics_heatmap_image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
         "vision_heatmap_image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
-        "roi_chart_image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+        "roi_chart_image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+        "consumption_chart_image": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
     }
     
     try:
@@ -29,8 +30,8 @@ def test_export_report():
             content_preview = response.text[:100]
             print(f"Content Preview: {content_preview}")
             
-            if "<!DOCTYPE html>" in response.text and "Visual Light Analysis" in response.text:
-                print("✅ TEST PASSED: Valid HTML received.")
+            if "<!DOCTYPE html>" in response.text and "Visual Light Analysis" in response.text and "Annual Energy Consumption" in response.text:
+                print("✅ TEST PASSED: Valid HTML received with all charts.")
             else:
                 print("❌ TEST FAILED: Response does not look like the expected HTML.")
         else:

@@ -20,6 +20,7 @@ class ReportRequest(BaseModel):
     physics_heatmap_image: Optional[str] = None
     vision_heatmap_image: Optional[str] = None
     roi_chart_image: Optional[str] = None
+    consumption_chart_image: Optional[str] = None
 
 def generate_html_report(data: ReportRequest) -> str:
     """
@@ -192,7 +193,10 @@ def generate_html_report(data: ReportRequest) -> str:
                 <h2 class="section-title">Economic Forecast (ROI)</h2>
                 <p>Projected return on investment comparing current lighting configuration vs. recommended high-efficiency upgrades.</p>
                 
-                {f'<div class="chart-container"><img src="data:image/png;base64,{data.roi_chart_image}" alt="ROI Chart"></div>' if data.roi_chart_image else '<p style="color:var(--text-muted)">No ROI chart available.</p>'}
+                <div class="metrics-grid" style="grid-template-columns: 1fr 1fr;">
+                    {f'<div class="chart-container"><img src="data:image/png;base64,{data.roi_chart_image}" alt="ROI Chart"></div>' if data.roi_chart_image else '<p style="color:var(--text-muted)">No ROI chart available.</p>'}
+                    {f'<div class="chart-container"><img src="data:image/png;base64,{data.consumption_chart_image}" alt="Consumption Chart"></div>' if data.consumption_chart_image else '<p style="color:var(--text-muted)">No consumption chart available.</p>'}
+                </div>
             </div>
             
             <div class="footer">
