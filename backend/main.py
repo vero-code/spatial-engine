@@ -94,9 +94,10 @@ async def api_spatial_audit(file: UploadFile = File(...)):
     
     # Generate Overlay
     # Mocking Agent Decision: Placing lamps at logical points
-    # For now, let's place one central lamp and perhaps one near a corner to show off.
-    # Using relative coordinates (0.0 to 1.0)
-    mock_lamp_decisions = [(0.5, 0.5), (0.2, 0.3)]
+    # Randomized to simulate "Recalculate" feature
+    import random
+    num_lamps = random.randint(2, 4)
+    mock_lamp_decisions = [(random.uniform(0.2, 0.8), random.uniform(0.2, 0.8)) for _ in range(num_lamps)]
     
     overlay_b64 = overlay_heatmap_on_image(contents, lamp_positions=mock_lamp_decisions)
 

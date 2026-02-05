@@ -114,6 +114,15 @@ const VisionAudit: React.FC<VisionAuditProps> = ({ onAuditComplete }) => {
         >
           {isAuditing ? 'Analyzing Multimodal Stream...' : 'Run Spatial Audit'}
         </button>
+
+        {heatmapOverlay && !isAuditing && (
+          <button
+            onClick={runAudit}
+            className="w-full mt-3 bg-transparent border border-white/20 text-gray-400 hover:text-white hover:border-white/50 py-2 rounded-lg transition-all text-sm uppercase tracking-wider"
+          >
+            Recalculate Design
+          </button>
+        )}
       </div>
 
       <div className="glass-panel p-6">
