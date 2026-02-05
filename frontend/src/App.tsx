@@ -6,6 +6,7 @@ import EconomicEngine from './components/EconomicEngine';
 import VisionAudit from './components/VisionAudit';
 import MarketHub from './components/MarketHub';
 import ConfigGenerator from './components/ConfigGenerator';
+import LiveConsole from './components/LiveConsole';
 
 const API_BASE_URL = "http://localhost:8000/api";
 
@@ -204,7 +205,19 @@ function App() {
             </h1>
             <p className="text-gray-500 text-sm font-medium">Autonomous Physics Analysis & Energy Simulation</p>
           </div>
-          <button 
+          <div className="flex items-center gap-3">
+             <button 
+              onClick={() => setActiveSection('live')}
+              className={`btn-premium transition-colors ${
+                activeSection === 'live' 
+                  ? 'bg-accent-primary text-white shadow-lg shadow-accent-primary/20' 
+                  : 'bg-white/5 border border-border-muted text-gray-300 hover:bg-white/10'
+              }`}
+            >
+              Gemini Live
+            </button>
+            <div className="h-8 w-px bg-white/10 mx-2"></div>
+            <button 
             onClick={handleExportReport}
             className="btn-premium bg-white/5 border border-border-muted text-gray-300 hover:bg-white/10 transition-colors mr-3"
           >
@@ -216,6 +229,7 @@ function App() {
           >
             Export PDF
           </button>
+          </div>
         </header>
 
         <div className="content-container">
@@ -250,6 +264,7 @@ function App() {
               </p>
             </div>
           )}
+          {activeSection === 'live' && <LiveConsole />}
         </div>
       </main>
     </div>
