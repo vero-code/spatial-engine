@@ -1,4 +1,4 @@
-# Spatial Engine AI 💡
+# Spatial Engine AI 💡 v0.4.0
 
 > **DeepTech Autonomous Agent for Optical Physics & Energy Optimization**
 > *Powered by Gemini 3 Pro & Google GenAI SDK*
@@ -51,19 +51,25 @@ The agent acts as a certified engineer, not just a salesperson.
 
 ## 🛠️ Project Structure
 
-```text
 spatial-engine/
-├── my_agent/
-│   ├── agent.py            # The "Brain": System Prompt, Orchestration, Tool Binding & Vision
-│   ├── market_agent.py     # The "Hands": Product Search, Rate Finding, Specs Verification & Fallback logic
-│   ├── physics_engine.py   # The "Core": Math formulas, ROI calculator & ISO/Health Compliance check
-│   └── spatial_state.py    # The "Memory": Persistent room state & geometry management
+├── backend/                # FastAPI Backend
+│   ├── main.py             # API Entry Points
+│   ├── report_generator.py # HTML Report Logic
+│   └── pdf_generator.py    # PDF Export Logic
+├── frontend/               # React Frontend (Vite)
+│   ├── src/
+│   │   ├── components/     # UI Components (VisionAudit, EconomicEngine, etc.)
+│   │   └── App.tsx         # Main UI Layout
+├── my_agent/               # The AI Core
+│   ├── agent.py            # The "Brain"
+│   ├── market_agent.py     # The "Hands"
+│   ├── physics_engine.py   # The "Core"
+│   └── spatial_state.py    # The "Memory"
 ├── data/
-│   └── smart_home_standards.md # Knowledge Base (RAG) for Zigbee/Matter standards
-├── tests/
-│   └── test_physics.py     # Unit tests verifying math formulas
-├── .env                    # API Keys configuration
-├── pyproject.toml          # Dependencies (uv managed)
+│   └── smart_home_standards.md # RAG Knowledge Base
+├── tests/                  # Unit Tests
+├── .env                    # Configuration
+├── pyproject.toml          # Python Dependencies
 └── README.md               # Documentation
 ```
 
@@ -99,8 +105,11 @@ spatial-engine/
 3.  **Run the Agent:**
     
     ```
-    # Run with a test image for Vision Audit
-    uv run my_agent/agent.py
+    # Start the Backend
+    uv run uvicorn backend.main:app --reload
+
+    # Start the Frontend (in a new terminal)
+    npm run dev --prefix frontend
     ```
     
 4.  **Run Tests:**
@@ -136,11 +145,11 @@ spatial-engine/
 - [x] **Config Generator**: JSON output for Home Assistant scenes (Focus/Relax/Movie).
 - [x] **Robustness**: Fallback Mode logic for offline operation.
 
-### 🎨 Sprint 4: The Interface (Next Up)
-> *Goal: Generative UI and Data Visualization.*
-- [ ] **Visualization**: Matplotlib/Heatmap Engine for Lux mapping on photos.
-- [ ] **Reporting**: HTML/CSS Report generation with PDF export.
-- [ ] **Generative UI**: Interactive widgets (e.g., Budget slider) and Visual Debugging.
+### 🎨 Sprint 4: The Interface (Completed)
+> *Status: Fully Operational. Generative UI and Reporting live.*
+- [x] **Visualization**: Heatmaps for Vision Audit and Physics Engine.
+- [x] **Reporting**: HTML and PDF report generation.
+- [x] **Generative UI**: Interactive React Frontend with Budget Slider and real-time updates.
 
 ### 🏆 Sprint 5: The Pitch (Planned)
 > *Goal: Polish and Submission.*
