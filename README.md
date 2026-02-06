@@ -51,6 +51,7 @@ The agent acts as a certified engineer, not just a salesperson.
 
 ## 🛠️ Project Structure
 
+```
 spatial-engine/
 ├── backend/                # FastAPI Backend
 │   ├── main.py             # API Entry Points
@@ -99,7 +100,11 @@ spatial-engine/
     Create a .env file:
     
     ```
+    # for backend
     GOOGLE_API_KEY=your_gemini_key_here
+    
+    # for frontend
+    VITE_GEMINI_API_KEY=your_gemini_key_here
     ```
     
 3.  **Run the Agent:**
