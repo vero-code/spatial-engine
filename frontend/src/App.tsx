@@ -8,7 +8,7 @@ import MarketHub from './components/MarketHub';
 import ConfigGenerator from './components/ConfigGenerator';
 import LiveConsole from './components/LiveConsole';
 
-const API_BASE_URL = "http://localhost:8000/api";
+const API_BASE_URL = "/api";
 
 function App() {
   const [activeSection, setActiveSection] = useState('dashboard');
@@ -25,18 +25,18 @@ function App() {
     { id: '2', msg: 'Connecting to Backend API...', type: 'system', time: '15:10:02' }
   ]);
 
-  // Check backend health on mount
-  useEffect(() => {
-    fetch("http://localhost:8000/")
-      .then(res => res.json())
-      .then(data => addLog(`Backend Connected: ${data.status}`, 'success'))
-      .catch(err => addLog(`Backend Connection Failed: Is the server running on port 8000?`, 'warn'));
-  }, []);
-
   const addLog = (msg: string, type: string = 'system') => {
     const time = new Date().toLocaleTimeString([], { hour12: false });
     setLogs(prev => [...prev, { id: Date.now().toString(), msg, type, time }]);
   };
+
+  // Check backend health on mount
+  useEffect(() => {
+    fetch("/")
+      .then(res => res.json())
+      .then(data => addLog(`Backend Connected: ${data.status}`, 'success'))
+      .catch(err => addLog(`Backend Connection Failed: Is the server running on port 8000?`, 'warn'));
+  }, []);
 
   const handleCalculateLux = async (lumens: number, distance: number, angle: number) => {
     try {

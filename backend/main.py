@@ -1,5 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, HTMLResponse, Response
 from typing import Optional
 import json
 import os
@@ -21,18 +23,18 @@ from my_agent.physics_engine import (
 
 app = FastAPI(title="Spatial Engine AI API")
 
-# Enable CORS for React frontend (Vite default is 5173)
+# Enable CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, replace with specific origins
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-@app.get("/")
-def read_root():
-    return {"status": "Spatial Engine API Online", "version": "1.0.4"}
+# @app.get("/")
+# def read_root():
+#     return {"status": "Spatial Engine API Online", "version": "1.0.4"}
 
 @app.post("/api/lux-calculation")
 def api_calculate_lux(lumens: float, distance: float, angle: float = 120.0):
@@ -133,6 +135,18 @@ def api_export_pdf(request: ReportRequest):
         media_type="application/pdf",
         headers={"Content-Disposition": f"attachment; filename=Engineering_Report.pdf"}
     )
+
+# --- FRONTEND SERVING ---
+if os.path.exists("frontend/dist/assets"):
+    app.mount("/assets", StaticFiles(directory="frontend/dist/assets"), name="assets")
+
+@app.get("/{full_path:path}")
+async def serve_react(full_path: str):
+    file_path = os.path.join("frontend/dist", full_path)
+    if os.path.exists(file_path) and os.path.isfile(file_path):
+        return FileResponse(file_path)
+
+    return FileResponse("frontend/dist/index.html")
 
 if __name__ == "__main__":
     import uvicorn

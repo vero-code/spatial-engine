@@ -1,0 +1,36 @@
+# === SYSTEM & GIT ===
+.git
+.gitignore
+.DS_Store
+.vscode
+.idea
+
+# === SECRETS (CRITICAL) ===
+.env
+.env.local
+backend/.env
+frontend/.env
+
+# === PYTHON (Backend) ===
+.venv
+venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+backend/__pycache__
+
+# === NODE.JS (Frontend) ===
+# Ignore local modules to ensure clean Docker install
+node_modules
+frontend/node_modules
+
+# Ignore local builds (Docker will build its own version)
+dist
+build
+frontend/dist
+frontend/build
+
+# === OPS ===
+README.md

@@ -11,9 +11,11 @@ RUN npm ci
 
 # 2. Copy source and build
 COPY frontend/ ./
-# Note: VITE_GOOGLE_API_KEY is injected at runtime in Cloud Run,
-# but if build fails, ensure your .env.production is handled or variables are optional.
-RUN npm run build
+
+ARG VITE_GEMINI_API_KEY
+ENV VITE_GEMINI_API_KEY=$VITE_GEMINI_API_KEY
+
+RUN npx vite build
 
 # ==========================================
 # STAGE 2: Backend (Python 3.11 Stable)
@@ -23,9 +25,14 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# Prevent Python from writing pyc files to disc
+ENV PYTHONDONTWRITEBYTECODE=1
+# Prevent Python from buffering stdout and stderr
+ENV PYTHONUNBUFFERED=1
+
 # 1. Install system dependencies for OpenCV (gl1, glib2 are required)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgl1-mesa-glx \
+    libgl1 \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
@@ -36,7 +43,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 COPY pyproject.toml uv.lock ./
 
 # 4. Install Python dependencies into system (no venv needed in Docker)
-RUN uv sync --frozen --no-dev --system
+RUN uv sync --frozen --no-dev
 
 # 5. Copy Backend code and AI Agent
 COPY backend/ ./backend/
