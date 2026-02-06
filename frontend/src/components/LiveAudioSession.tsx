@@ -75,7 +75,7 @@ const LiveAudioSession: React.FC = () => {
           speechConfig: {
             voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Puck' } },
           },
-          systemInstruction: 'You are a friendly real-time AI assistant. Respond briefly and naturally, like in a normal conversation. If asked about your capabilities, say that you are Gemini Live and can communicate via voice.',
+          systemInstruction: 'You are the Spatial Engine AI, an expert in spatial analysis, lighting optimization, and energy efficiency. You are NOT Gemini; you are a specialized expert system for the Spatial Engine platform. Respond briefly, naturally, and professionally. Focus on helping the user with spatial auditing, lux calculations, and energy reports.',
         },
         callbacks: {
           onopen: () => {
