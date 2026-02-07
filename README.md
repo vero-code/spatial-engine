@@ -49,6 +49,40 @@ The agent acts as a certified engineer, not just a salesperson.
 
 ---
 
+## 🏗️ Architecture
+
+> For detailed documentation on system design and data flows, see [ARCHITECTURE.md](ARCHITECTURE.md).
+
+```mermaid
+graph TD
+    User[User] -->|Interactions| FE["Frontend (React/Vite)"]
+    
+    subgraph "Client Side"
+        FE -->|REST| GAI[Google Gemini API]
+        FE -->|WebSocket/RTP| Live[Gemini Multimodal Live API]
+    end
+    
+    subgraph "Server Side (Python/FastAPI)"
+        FE -->|HTTP Requests| BE[Backend API]
+        
+        BE -->|Calculations| PE[Physics Engine]
+        BE -->|Market/Search| MA[Market Agent]
+        BE -->|Generation| RG[Report Generator]
+        
+        subgraph "Agent Core"
+            AC[Agent Runtime] -->|Tools| PE
+            AC -->|Tools| MA
+            AC -->|Tools| KB["Knowledge Base (RAG)"]
+            AC -->|State| SS[Spatial State]
+        end
+        
+        BE -->|Invokes| AC
+    end
+    
+    MA -->|Search| Web[Google Search]
+    RG -->|Outputs| PDF["PDF/HTML Reports"]
+```
+
 ## 🛠️ Project Structure
 
 ```
