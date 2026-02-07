@@ -1,7 +1,15 @@
-# Spatial Engine AI 💡 v0.4.0
+# Spatial Engine AI 💡 v1.0.0
 
 > **DeepTech Autonomous Agent for Optical Physics & Energy Optimization**
 > *Powered by Gemini 3 Pro & Google GenAI SDK*
+
+![Python](https://img.shields.io/badge/Python-3.12%2B-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.109%2B-009688)
+![React](https://img.shields.io/badge/React-19.0-61DAFB)
+![Vite](https://img.shields.io/badge/Vite-5.0%2B-646CFF)
+![Gemini](https://img.shields.io/badge/AI-Gemini%203.0-8E75B2)
+![Antigravity](https://img.shields.io/badge/Built%20with-Antigravity-FF6B6B)
+![License](https://img.shields.io/badge/License-MIT-green)
 
 Spatial Engine is a multimodal AI agent designed to act as a **Senior Optical Physicist**. Unlike standard chatbots, it combines Generative AI's vision capabilities with a deterministic physics engine to audit rooms, calculate lighting deficits, and project energy ROI.
 
@@ -27,7 +35,7 @@ The agent connects physics to the real economy.
 ![Economic Engine](docs/economic-engine.png)
 
 ### 3. The Vision System (Multimodal)
-The agent can "see" and audit a room from a single photograph using **Gemini 3.0 Vision**.
+The agent can "see" and audit a room from a single photograph using **Gemini Vision**.
 * **3x3 Grid Analysis**: Mentally divides the image into sectors to pinpoint features (e.g., "Window in Sector 3").
 * **Material Detection**: Analyzes wall textures (Concrete vs. Paint) to estimate Albedo (reflection coefficients).
 * **Shadow Detection**: Identifies under-lit zones requiring optimization.
@@ -52,6 +60,24 @@ The agent acts as a certified engineer, not just a salesperson.
 ### 7. Agentic Workflow
 * **Tool Use**: Autonomous Function Calling (The agent decides when to calculate, when to search, and when to read standards).
 * **Streaming CLI**: Real-time "Thinking" logs showing Tool Calls and arguments in the terminal.
+
+---
+
+## 🛠️ Tech Stack
+
+| Component | Technologies |
+|-----------|--------------|
+| **Frontend** | React 19, Vite, TailwindCSS, TypeScript |
+| **Backend** | Python 3.12, FastAPI, Uvicorn |
+| **AI Core** | Google GenAI SDK, Gemini 3.0 Pro, Gemini Live API |
+| **Infrastructure** | Docker, Google Cloud Run, UV (Package Manager) |
+
+---
+
+### 8. New in v1.0.0
+* **Gemini Live API**: Real-time multimodal interaction.
+* **Live Persona**: Customized voice and personality for the Live API.
+* **Cloud Run Ready**: Fully configured for serverless deployment on Google Cloud.
 
 ---
 
@@ -196,10 +222,16 @@ spatial-engine/
 - [x] **Reporting**: HTML and PDF report generation.
 - [x] **Generative UI**: Interactive React Frontend with Budget Slider and real-time updates.
 
-### 🏆 Sprint 5: The Pitch (Planned)
+### 🏆 Sprint 5: The Pitch (Completed)
 > *Goal: Polish and Submission.*
+- [x] **Gemini Live API**: Real-time active reasoning.
+- [x] **Documentation**: Architecture diagrams, Demo video script, Final submission text.
+
+### 🔮 Future Roadmap
 - [ ] **Optimization**: Latency reduction, Error handling, End-to-End testing.
-- [ ] **Documentation**: Architecture diagrams, Demo video script, Final submission text.
+- [ ] **Hardware**: Gemini 3 reasoning with Nano Banana Pro.
+- [ ] **Synthesized Video**: Gemini Live API to synthesize live video for real-time recommendations.
+- [ ] **Voice Chat**: Bi-directional voice recognition in the chat interface.
    
 ----------
 
