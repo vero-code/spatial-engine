@@ -13,6 +13,10 @@
 
 Spatial Engine is a multimodal AI agent designed to act as a **Senior Optical Physicist**. Unlike standard chatbots, it combines Generative AI's vision capabilities with a deterministic physics engine to audit rooms, calculate lighting deficits, and project energy ROI.
 
+## 🎥 Demo
+
+[![Spatial Engine AI Demo](https://img.youtube.com/vi/Bv83Zhib2L0/0.jpg)](https://youtu.be/Bv83Zhib2L0)
+
 ---
 
 ## 🚀 Key Features
