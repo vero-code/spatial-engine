@@ -30,6 +30,9 @@ __pycache__/
 *.jpeg
 *.png
 *.gif
+!docs/*.png
+!docs/*.jpg
+!docs/*.jpeg
 
 # Folders
 media/

@@ -15,6 +15,8 @@ The agent does not "guess" math. It delegates calculations to a rigorous Python 
 * **Health Compliance (ISO/SanPiN)**: Automatically checks if lighting levels meet health standards for offices (500 Lux), living rooms, etc., and warns of safety deficits.
 * **Unit Tested**: All physics formulas are covered by `unittest` to ensure 100% reliability.
 
+![Physics Engine](docs/lux-calculator.png)
+
 ### 2. The Market & Economic Engine (Real-Time)
 The agent connects physics to the real economy.
 * **Live Market Search**: Finds real-world products (prices, specs) and local electricity rates (USD/kWh) via Google Search.
@@ -22,12 +24,16 @@ The agent connects physics to the real economy.
 * **Search Verification**: "Trust but Verify" logic. The agent reads product specs to ensure a lamp is truly "dimmable" or "smart" before recommending it.
 * **Fallback Resilience**: Continues working offline using averaged market data if the internet connection fails.
 
+![Economic Engine](docs/economic-engine.png)
+
 ### 3. The Vision System (Multimodal)
 The agent can "see" and audit a room from a single photograph using **Gemini 3.0 Vision**.
 * **3x3 Grid Analysis**: Mentally divides the image into sectors to pinpoint features (e.g., "Window in Sector 3").
 * **Material Detection**: Analyzes wall textures (Concrete vs. Paint) to estimate Albedo (reflection coefficients).
 * **Shadow Detection**: Identifies under-lit zones requiring optimization.
 * **Scale Estimation**: Uses **Reference Object Inference** (e.g., comparing room width to standard door frames) to estimate floor area without user input.
+
+![Vision Audit](docs/vision-audit.png)
 
 ### 4. Spatial State Memory (Stateful)
 The agent possesses a "Short-term Memory" via the `SpatialState` class.
